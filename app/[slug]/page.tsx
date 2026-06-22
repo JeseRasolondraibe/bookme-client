@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase-server";
 import BookingFlow from "@/components/BookingFlow";
 
 export default async function PrestaPage({ params }: { params: { slug: string } }) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: presta } = await supabase
     .from("prestas")
