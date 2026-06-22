@@ -2,6 +2,9 @@
 import { useState } from "react";
 import { Booking } from "../BookingFlow";
 
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://flrtdhzcimbkbcgczmea.supabase.co";
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+
 function formatDate(d: string) {
   return new Date(d + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
 }
@@ -23,9 +26,13 @@ export default function StepContact({ booking, onSubmit, onBack }: {
     setLoading(true); setError("");
     try {
       const slug = window.location.pathname.split("/")[1];
-      const res  = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/bookings`, {
+      const res  = await fetch(`${SUPABASE_URL}/functions/v1/bookings`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "apikey": process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY! },
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        },
         body: JSON.stringify({
           slug, service_id: booking.service.id, date: booking.date, time: booking.time,
           client_name: name.trim(), client_phone: phone.trim(), client_email: email.trim() || undefined,
