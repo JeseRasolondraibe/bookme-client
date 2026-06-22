@@ -2,6 +2,9 @@
 import { useState, useEffect } from "react";
 import { Presta, Service } from "../BookingFlow";
 
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://flrtdhzcimbkbcgczmea.supabase.co";
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+
 const DAYS = ["L","M","M","J","V","S","D"];
 const MONTHS = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 
@@ -29,9 +32,14 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
   useEffect(() => {
     if (!date) return;
     setLoading(true); setSlots([]); setTime(null);
-    fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/slots?slug=${presta.slug}&service_id=${service.id}&date=${date}`,
-      { headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY! } })
+    fetch(`${SUPABASE_URL}/functions/v1/slots?slug=${presta.slug}&service_id=${service.id}&date=${date}`, {
+      headers: {
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      }
+    })
       .then(r => r.json()).then(d => setSlots(d.slots ?? []))
+      .catch(() => setSlots([]))
       .finally(() => setLoading(false));
   }, [date]);
 
