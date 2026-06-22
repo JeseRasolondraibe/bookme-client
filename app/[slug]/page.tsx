@@ -2,13 +2,14 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase-server";
 import BookingFlow from "@/components/BookingFlow";
 
-export default async function PrestaPage({ params }: { params: { slug: string } }) {
+export default async function PrestaPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   const supabase = await createClient();
 
   const { data: presta } = await supabase
     .from("prestas")
     .select("id, slug, name, bio, avatar_url, is_active")
-    .eq("slug", params.slug)
+    .eq("slug", slug)
     .single();
 
   if (!presta || !presta.is_active) notFound();
