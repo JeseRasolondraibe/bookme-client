@@ -20,13 +20,13 @@ export default function PrivacyPage() {
         Politique de confidentialité
       </h1>
       <p style={{ color: "#6e6e73", fontSize: "0.9rem", marginBottom: 40 }}>
-        Dernière mise à jour : [DATE]
+        Dernière mise à jour : 23/06/2026
       </p>
 
       <p>
         La présente politique de confidentialité décrit comment l&apos;application{" "}
         <strong>BookMe</strong> (« l&apos;Application »), éditée par{" "}
-        <strong>[NOM_EDITEUR]</strong>, traite vos informations lorsque vous
+        <strong>Jese Rasolondraibe</strong>, traite vos informations lorsque vous
         utilisez nos services.
       </p>
 
