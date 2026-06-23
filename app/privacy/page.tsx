@@ -120,8 +120,8 @@ export default function PrivacyPage() {
         <p>
           Pour toute question concernant cette politique de confidentialité,
           contactez-nous à :{" "}
-          <a href="mailto:[EMAIL_CONTACT]" style={{ color: "#0066cc" }}>
-            [EMAIL_CONTACT]
+          <a href="mailto:jeserasolondraibe@gmail.com" style={{ color: "#0066cc" }}>
+            jeserasolondraibe@gmail.com
           </a>
           .
         </p>
@@ -136,7 +136,7 @@ export default function PrivacyPage() {
           fontSize: "0.875rem",
         }}
       >
-        © [ANNEE] [NOM_EDITEUR]. Tous droits réservés.
+        © 2026 Jese Rasolondraibe. Tous droits réservés.
       </div>
     </main>
   );
