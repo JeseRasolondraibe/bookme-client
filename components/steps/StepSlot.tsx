@@ -12,15 +12,19 @@ function toISO(y: number, m: number, d: number) {
   return `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
 }
 
-async function fetchHasSlots(slug: string, serviceId: string, date: string): Promise<boolean> {
+type DayStatus = "available" | "full" | "closed" | "past" | "loading" | "unknown";
+
+async function fetchDayStatus(slug: string, serviceId: string, date: string): Promise<DayStatus> {
   try {
     const r = await fetch(
       `${SUPABASE_URL}/functions/v1/slots?slug=${slug}&service_id=${serviceId}&date=${date}`,
       { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
     );
     const d = await r.json();
-    return Array.isArray(d.slots) && d.slots.length > 0;
-  } catch { return false; }
+    if (!d.open) return "closed";
+    if (Array.isArray(d.slots) && d.slots.length > 0) return "available";
+    return "full";
+  } catch { return "unknown"; }
 }
 
 export default function StepSlot({ presta, service, selected, onSelect, onBack }: {
@@ -30,22 +34,21 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
   onBack: () => void;
 }) {
   const today = new Date();
-  const [year,       setYear]       = useState(today.getFullYear());
-  const [month,      setMonth]      = useState(today.getMonth());
-  const [date,       setDate]       = useState<string | null>(selected.date ?? null);
-  const [time,       setTime]       = useState<string | null>(selected.time ?? null);
-  const [slots,      setSlots]      = useState<string[]>([]);
-  const [loadSlots,  setLoadSlots]  = useState(false);
-  const [availability, setAvailability] = useState<Record<string, boolean>>({});
-  const [loadingMonth, setLoadingMonth] = useState(false);
+  const [year,        setYear]        = useState(today.getFullYear());
+  const [month,       setMonth]       = useState(today.getMonth());
+  const [date,        setDate]        = useState<string | null>(selected.date ?? null);
+  const [time,        setTime]        = useState<string | null>(selected.time ?? null);
+  const [slots,       setSlots]       = useState<string[]>([]);
+  const [loadSlots,   setLoadSlots]   = useState(false);
+  const [dayStatus,   setDayStatus]   = useState<Record<string, DayStatus>>({});
+  const [loadingMonth,setLoadingMonth]= useState(false);
 
   const todayStr  = toISO(today.getFullYear(), today.getMonth(), today.getDate());
   const daysCount = new Date(year, month + 1, 0).getDate();
   const firstDay  = (new Date(year, month, 1).getDay() + 6) % 7;
 
-  // Précharge la dispo de tout le mois
   useEffect(() => {
-    setAvailability({});
+    setDayStatus({});
     setDate(null);
     setTime(null);
     setSlots([]);
@@ -58,15 +61,14 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
     }
 
     Promise.all(
-      futureDays.map(iso => fetchHasSlots(presta.slug, service.id, iso).then(has => ({ iso, has })))
+      futureDays.map(iso => fetchDayStatus(presta.slug, service.id, iso).then(status => ({ iso, status })))
     ).then(results => {
-      const map: Record<string, boolean> = {};
-      results.forEach(({ iso, has }) => { map[iso] = has; });
-      setAvailability(map);
+      const map: Record<string, DayStatus> = {};
+      results.forEach(({ iso, status }) => { map[iso] = status; });
+      setDayStatus(map);
     }).finally(() => setLoadingMonth(false));
   }, [year, month]);
 
-  // Charge les créneaux du jour sélectionné
   useEffect(() => {
     if (!date) return;
     setLoadSlots(true); setSlots([]); setTime(null);
@@ -80,6 +82,26 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
 
   const prevMonth = () => month === 0 ? (setMonth(11), setYear(y => y-1)) : setMonth(m => m-1);
   const nextMonth = () => month === 11 ? (setMonth(0), setYear(y => y+1)) : setMonth(m => m+1);
+
+  function getDayStyle(iso: string, isSel: boolean) {
+    const status = dayStatus[iso] as DayStatus | undefined;
+    if (isSel) return "bg-violet-500 text-white font-semibold";
+    if (!status || status === "loading") return "text-stone-300 animate-pulse";
+    if (status === "available") return "hover:bg-green-50 text-stone-700 cursor-pointer";
+    if (status === "full")   return "text-orange-400 cursor-default";
+    if (status === "closed") return "text-stone-300 cursor-default";
+    return "text-stone-300 cursor-default";
+  }
+
+  function getDayIndicator(iso: string, isSel: boolean) {
+    const status = dayStatus[iso] as DayStatus | undefined;
+    if (!status || status === "loading" || status === "past" || status === "unknown") return null;
+    if (isSel) return <span className="text-[7px] text-white">●</span>;
+    if (status === "available") return <span className="text-[7px] text-green-500">●</span>;
+    if (status === "full")      return <span className="text-[7px] text-orange-400">●</span>;
+    if (status === "closed")    return <span className="text-[7px] text-red-400">✕</span>;
+    return null;
+  }
 
   return (
     <section>
@@ -104,32 +126,21 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
         <div className="grid grid-cols-7 gap-0.5">
           {Array.from({ length: firstDay }).map((_, i) => <div key={`e-${i}`} />)}
           {Array.from({ length: daysCount }).map((_, i) => {
-            const day = i + 1;
-            const iso = toISO(year, month, day);
-            const isPast    = iso < todayStr;
-            const isSel     = iso === date;
-            const hasSlots  = availability[iso] === true;
-            const isClosed  = !isPast && availability[iso] === false;
-            const isLoading = !isPast && !(iso in availability) && loadingMonth;
+            const day    = i + 1;
+            const iso    = toISO(year, month, day);
+            const isPast = iso < todayStr;
+            const isSel  = iso === date;
+            const status = dayStatus[iso] as DayStatus | undefined;
+            const clickable = !isPast && status === "available";
 
             return (
               <button key={day}
-                disabled={isPast || isClosed || isLoading}
-                onClick={() => !isPast && hasSlots && setDate(iso)}
-                className={`relative h-10 w-full text-xs rounded-lg transition-colors flex flex-col items-center justify-center gap-0.5
-                  ${isPast   ? "text-stone-200 cursor-default" : ""}
-                  ${isSel    ? "bg-violet-500 text-white font-semibold" : ""}
-                  ${hasSlots && !isSel ? "hover:bg-green-50 text-stone-700" : ""}
-                  ${isClosed ? "text-stone-300 cursor-default" : ""}
-                  ${isLoading ? "text-stone-300 animate-pulse" : ""}`}>
+                disabled={!clickable}
+                onClick={() => clickable && setDate(iso)}
+                className={`h-10 w-full text-xs rounded-lg transition-colors flex flex-col items-center justify-center gap-0.5
+                  ${isPast ? "text-stone-200 cursor-default" : getDayStyle(iso, isSel)}`}>
                 <span>{day}</span>
-                {!isPast && !isLoading && (
-                  hasSlots
-                    ? <span className={`text-[8px] ${isSel ? "text-white" : "text-green-500"}`}>●</span>
-                    : isClosed
-                      ? <span className="text-[8px] text-red-400">✕</span>
-                      : null
-                )}
+                {!isPast && getDayIndicator(iso, isSel)}
               </button>
             );
           })}
@@ -138,6 +149,22 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
         {loadingMonth && (
           <p className="text-center text-xs text-stone-400 mt-2">Chargement des disponibilités...</p>
         )}
+
+        {/* Légende */}
+        <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-stone-100">
+          <div className="flex items-center gap-1.5">
+            <span className="text-green-500 text-xs">●</span>
+            <span className="text-xs text-stone-400">Disponible</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-orange-400 text-xs">●</span>
+            <span className="text-xs text-stone-400">Complet</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-red-400 text-xs">✕</span>
+            <span className="text-xs text-stone-400">Fermé</span>
+          </div>
+        </div>
       </div>
 
       {date && (
