@@ -18,7 +18,7 @@ async function fetchDayStatus(slug: string, serviceId: string, date: string): Pr
   try {
     const r = await fetch(
       `${SUPABASE_URL}/functions/v1/slots?slug=${slug}&service_id=${serviceId}&date=${date}`,
-      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
+      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }, cache: "no-store" }
     );
     const d = await r.json();
     if (!d.open) return "closed";
@@ -34,14 +34,14 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
   onBack: () => void;
 }) {
   const today = new Date();
-  const [year,        setYear]        = useState(today.getFullYear());
-  const [month,       setMonth]       = useState(today.getMonth());
-  const [date,        setDate]        = useState<string | null>(selected.date ?? null);
-  const [time,        setTime]        = useState<string | null>(selected.time ?? null);
-  const [slots,       setSlots]       = useState<string[]>([]);
-  const [loadSlots,   setLoadSlots]   = useState(false);
-  const [dayStatus,   setDayStatus]   = useState<Record<string, DayStatus>>({});
-  const [loadingMonth,setLoadingMonth]= useState(false);
+  const [year,         setYear]         = useState(today.getFullYear());
+  const [month,        setMonth]        = useState(today.getMonth());
+  const [date,         setDate]         = useState<string | null>(selected.date ?? null);
+  const [time,         setTime]         = useState<string | null>(selected.time ?? null);
+  const [slots,        setSlots]        = useState<string[]>([]);
+  const [loadSlots,    setLoadSlots]    = useState(false);
+  const [dayStatus,    setDayStatus]    = useState<Record<string, DayStatus>>({});
+  const [loadingMonth, setLoadingMonth] = useState(false);
 
   const todayStr  = toISO(today.getFullYear(), today.getMonth(), today.getDate());
   const daysCount = new Date(year, month + 1, 0).getDate();
@@ -72,9 +72,10 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
   useEffect(() => {
     if (!date) return;
     setLoadSlots(true); setSlots([]); setTime(null);
-    fetch(`${SUPABASE_URL}/functions/v1/slots?slug=${presta.slug}&service_id=${service.id}&date=${date}`, {
-      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }
-    })
+    fetch(
+      `${SUPABASE_URL}/functions/v1/slots?slug=${presta.slug}&service_id=${service.id}&date=${date}`,
+      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }, cache: "no-store" }
+    )
       .then(r => r.json()).then(d => setSlots(d.slots ?? []))
       .catch(() => setSlots([]))
       .finally(() => setLoadSlots(false));
@@ -88,15 +89,15 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
     if (isSel) return "bg-violet-500 text-white font-semibold";
     if (!status || status === "loading") return "text-stone-300 animate-pulse";
     if (status === "available") return "hover:bg-green-50 text-stone-700 cursor-pointer";
-    if (status === "full")   return "text-orange-400 cursor-default";
-    if (status === "closed") return "text-stone-300 cursor-default";
+    if (status === "full")      return "text-orange-400 cursor-default";
+    if (status === "closed")    return "text-stone-300 cursor-default";
     return "text-stone-300 cursor-default";
   }
 
   function getDayIndicator(iso: string, isSel: boolean) {
     const status = dayStatus[iso] as DayStatus | undefined;
     if (!status || status === "loading" || status === "past" || status === "unknown") return null;
-    if (isSel) return <span className="text-[7px] text-white">●</span>;
+    if (isSel)              return <span className="text-[7px] text-white">●</span>;
     if (status === "available") return <span className="text-[7px] text-green-500">●</span>;
     if (status === "full")      return <span className="text-[7px] text-orange-400">●</span>;
     if (status === "closed")    return <span className="text-[7px] text-red-400">✕</span>;
@@ -150,7 +151,6 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
           <p className="text-center text-xs text-stone-400 mt-2">Chargement des disponibilités...</p>
         )}
 
-        {/* Légende */}
         <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-stone-100">
           <div className="flex items-center gap-1.5">
             <span className="text-green-500 text-xs">●</span>
