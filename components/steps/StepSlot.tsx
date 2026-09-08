@@ -27,6 +27,18 @@ async function fetchDayStatus(slug: string, serviceId: string, date: string): Pr
   } catch { return "unknown"; }
 }
 
+function SlotButton({ slot, selected, onSelect }: { slot: string; selected: boolean; onSelect: () => void }) {
+  return (
+    <button onClick={onSelect}
+      className={`py-2.5 text-sm rounded-xl border transition-all active:scale-[0.98]
+        ${selected
+          ? "border-accent-600 bg-accent-50 text-accent-600 font-medium ring-1 ring-accent-400"
+          : "border-stone-200 bg-white text-stone-700 hover:border-accent-400"}`}>
+      {slot}
+    </button>
+  );
+}
+
 export default function StepSlot({ presta, service, selected, onSelect, onBack }: {
   presta: Presta; service: Service;
   selected: { date?: string; time?: string };
@@ -84,9 +96,13 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
   const prevMonth = () => month === 0 ? (setMonth(11), setYear(y => y-1)) : setMonth(m => m-1);
   const nextMonth = () => month === 11 ? (setMonth(0), setYear(y => y+1)) : setMonth(m => m+1);
 
+  // Regroupement purement présentationnel des créneaux déjà chargés (aucun appel réseau ici).
+  const morningSlots   = slots.filter(s => parseInt(s.slice(0, 2), 10) < 12);
+  const afternoonSlots = slots.filter(s => parseInt(s.slice(0, 2), 10) >= 12);
+
   function getDayStyle(iso: string, isSel: boolean) {
     const status = dayStatus[iso] as DayStatus | undefined;
-    if (isSel) return "bg-violet-500 text-white font-semibold";
+    if (isSel) return "bg-accent-600 text-white font-semibold";
     if (!status || status === "loading") return "text-stone-300 animate-pulse";
     if (status === "available") return "hover:bg-green-50 text-stone-700 cursor-pointer";
     if (status === "full")      return "text-orange-400 cursor-default";
@@ -108,12 +124,12 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
     <section>
       <div className="flex items-center gap-2 mb-4">
         <button onClick={onBack} className="text-stone-400 hover:text-stone-700 text-sm">← Retour</button>
-        <span className="ml-auto text-xs bg-violet-100 text-violet-700 px-2 py-1 rounded-lg font-medium">
+        <span className="ml-auto text-xs bg-accent-50 text-accent-600 px-2 py-1 rounded-lg font-medium">
           {service.name} · {service.price} €
         </span>
       </div>
 
-      <div className="bg-white rounded-2xl border border-stone-200 p-4 mb-4">
+      <div className="bg-white rounded-xl border border-stone-200 p-4 mb-4">
         <div className="flex items-center justify-between mb-3">
           <button onClick={prevMonth} className="text-stone-400 hover:text-stone-700 px-1 text-lg">‹</button>
           <span className="text-sm font-semibold text-stone-900">{MONTHS[month]} {year}</span>
@@ -168,21 +184,27 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
       </div>
 
       {date && (
-        <div>
-          <p className="text-xs font-medium text-stone-500 mb-2 uppercase tracking-wide">Créneaux disponibles</p>
+        <div className="flex flex-col gap-4">
           {loadSlots && <p className="text-sm text-stone-400">Chargement...</p>}
           {!loadSlots && slots.length === 0 && <p className="text-sm text-stone-400">Aucun créneau ce jour. Essaie une autre date.</p>}
-          {!loadSlots && slots.length > 0 && (
-            <div className="grid grid-cols-3 gap-2">
-              {slots.map(s => (
-                <button key={s} onClick={() => setTime(s)}
-                  className={`py-2.5 text-sm rounded-xl border transition-all
-                    ${time === s
-                      ? "border-violet-500 bg-violet-50 text-violet-700 font-medium ring-1 ring-violet-300"
-                      : "border-stone-200 bg-white text-stone-700 hover:border-violet-300"}`}>
-                  {s}
-                </button>
-              ))}
+          {!loadSlots && morningSlots.length > 0 && (
+            <div>
+              <p className="text-xs font-medium text-stone-500 mb-2 uppercase tracking-wide">Matin</p>
+              <div className="grid grid-cols-3 gap-2">
+                {morningSlots.map(s => (
+                  <SlotButton key={s} slot={s} selected={time === s} onSelect={() => setTime(s)} />
+                ))}
+              </div>
+            </div>
+          )}
+          {!loadSlots && afternoonSlots.length > 0 && (
+            <div>
+              <p className="text-xs font-medium text-stone-500 mb-2 uppercase tracking-wide">Après-midi</p>
+              <div className="grid grid-cols-3 gap-2">
+                {afternoonSlots.map(s => (
+                  <SlotButton key={s} slot={s} selected={time === s} onSelect={() => setTime(s)} />
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -190,7 +212,7 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
 
       {date && time && (
         <button onClick={() => onSelect(date, time)}
-          className="mt-6 w-full bg-violet-600 hover:bg-violet-700 text-white font-medium py-3.5 rounded-xl transition-colors">
+          className="mt-6 w-full bg-accent-600 hover:bg-accent-700 text-white font-medium py-3.5 rounded-xl shadow-sm transition-all active:scale-[0.98]">
           Confirmer ce créneau →
         </button>
       )}

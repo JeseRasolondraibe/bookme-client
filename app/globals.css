@@ -10,6 +10,13 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Accent — aligned with the iOS app's brand purple (#534AB7) */
+  --color-accent-50: #EEEDFE;
+  --color-accent-400: #AFA9EC;
+  --color-accent-500: #7F77DD;
+  --color-accent-600: #534AB7;
+  --color-accent-700: #463F9C;
 }
 
 @media (prefers-color-scheme: dark) {

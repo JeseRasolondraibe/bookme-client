@@ -24,7 +24,7 @@ export default function StepConfirm({ booking, presta, onRestart }: {
       </div>
       <h2 className="text-xl font-semibold text-stone-900 mb-1">RDV confirmé !</h2>
       <p className="text-sm text-stone-400 mb-8">Un SMS de confirmation vous a été envoyé au {booking.client_phone}</p>
-      <div className="bg-white border border-stone-200 rounded-2xl p-4 mb-6 text-left">
+      <div className="bg-white border border-stone-200 rounded-xl p-4 mb-6 text-left">
         <p className="text-sm font-semibold text-stone-900 mb-3">{presta.name}</p>
         <div className="flex justify-between text-sm py-1.5 border-b border-stone-100">
           <span className="text-stone-500">Prestation</span><span className="font-medium text-stone-900">{booking.service.name}</span>
@@ -41,7 +41,7 @@ export default function StepConfirm({ booking, presta, onRestart }: {
       </div>
       <div className="flex flex-col gap-3">
         <button onClick={addToCalendar}
-          className="w-full border border-stone-200 bg-white hover:border-violet-300 text-stone-700 font-medium py-3 rounded-xl text-sm transition-colors">
+          className="w-full border border-stone-200 bg-white hover:border-accent-400 text-stone-700 font-medium py-3 rounded-xl text-sm transition-all active:scale-[0.98]">
           Ajouter à mon calendrier
         </button>
         <button onClick={onRestart} className="w-full text-stone-400 hover:text-stone-600 text-sm py-2 transition-colors">

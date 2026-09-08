@@ -12,15 +12,15 @@ export default function StepService({ services, selected, onSelect }: {
       <div className="flex flex-col gap-3">
         {services.map(s => (
           <button key={s.id} onClick={() => onSelect(s)}
-            className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl border text-left transition-all
-              ${selected?.id === s.id ? "border-violet-500 bg-violet-50 ring-1 ring-violet-300" : "border-stone-200 bg-white hover:border-violet-300"}`}>
+            className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl border text-left transition-all active:scale-[0.98]
+              ${selected?.id === s.id ? "border-accent-600 bg-accent-50 ring-1 ring-accent-400" : "border-stone-200 bg-white hover:border-accent-400"}`}>
             <div>
               <p className="text-sm font-medium text-stone-900">{s.name}</p>
               <p className="text-xs text-stone-400 mt-0.5">{s.duration_min} min</p>
             </div>
             <div className="flex items-center gap-3">
               <span className="text-sm font-semibold text-stone-900">{s.price} €</span>
-              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${selected?.id === s.id ? "border-violet-500 bg-violet-500" : "border-stone-300"}`}>
+              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${selected?.id === s.id ? "border-accent-600 bg-accent-600" : "border-stone-300"}`}>
                 {selected?.id === s.id && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
               </div>
             </div>

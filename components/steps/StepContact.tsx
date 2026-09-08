@@ -51,7 +51,7 @@ export default function StepContact({ booking, onSubmit, onBack }: {
   return (
     <section>
       <button onClick={onBack} className="text-stone-400 hover:text-stone-700 text-sm mb-4 block">← Retour</button>
-      <div className="bg-white border border-stone-200 rounded-2xl p-4 mb-6">
+      <div className="bg-white border border-stone-200 rounded-xl p-4 mb-6">
         <div className="flex justify-between text-sm py-1.5 border-b border-stone-100">
           <span className="text-stone-500">Prestation</span><span className="font-medium text-stone-900">{booking.service.name}</span>
         </div>
@@ -69,22 +69,22 @@ export default function StepContact({ booking, onSubmit, onBack }: {
         <div>
           <label className="text-xs font-medium text-stone-500 mb-1.5 block">Prénom et nom</label>
           <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Camille Laurent"
-            className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-900 placeholder:text-stone-300 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-200 bg-white" />
+            className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-900 placeholder:text-stone-300 focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-400 bg-white" />
         </div>
         <div>
-          <label className="text-xs font-medium text-stone-500 mb-1.5 block">Téléphone <span className="text-violet-500">*</span></label>
+          <label className="text-xs font-medium text-stone-500 mb-1.5 block">Téléphone <span className="text-accent-600">*</span></label>
           <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="06 12 34 56 78"
-            className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-900 placeholder:text-stone-300 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-200 bg-white" />
+            className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-900 placeholder:text-stone-300 focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-400 bg-white" />
         </div>
         <div>
           <label className="text-xs font-medium text-stone-500 mb-1.5 block">Email <span className="text-stone-300">(optionnel)</span></label>
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="camille@mail.com"
-            className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-900 placeholder:text-stone-300 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-200 bg-white" />
+            className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-900 placeholder:text-stone-300 focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-400 bg-white" />
         </div>
       </div>
       {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
       <button onClick={handleSubmit} disabled={!valid || loading}
-        className="mt-6 w-full bg-violet-600 hover:bg-violet-700 disabled:bg-stone-200 disabled:text-stone-400 text-white font-medium py-3.5 rounded-xl transition-colors">
+        className="mt-6 w-full bg-accent-600 hover:bg-accent-700 disabled:bg-stone-200 disabled:text-stone-400 text-white font-medium py-3.5 rounded-xl shadow-sm transition-all active:scale-[0.98]">
         {loading ? "Réservation en cours..." : "Réserver →"}
       </button>
       <p className="text-xs text-stone-400 text-center mt-3">Annulation gratuite jusqu'à 24h avant</p>
