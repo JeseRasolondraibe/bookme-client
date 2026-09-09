@@ -1,6 +1,9 @@
 "use client";
 import { Service } from "../BookingFlow";
+import { ClockIcon, TagIcon } from "../icons";
 
+// La sélection ne fait plus avancer le flow toute seule : le client valide via
+// le bouton « Continuer » du récapitulatif, ce qui lui laisse le temps de comparer.
 export default function StepService({ services, selected, onSelect }: {
   services: Service[];
   selected?: Service;
@@ -8,24 +11,39 @@ export default function StepService({ services, selected, onSelect }: {
 }) {
   return (
     <section>
-      <h2 className="text-base font-semibold text-stone-900 mb-4">Choisir une prestation</h2>
+      <h2 className="text-lg font-semibold text-stone-900 mb-5">1. Choisissez une prestation</h2>
+
+      {services.length === 0 && (
+        <p className="text-sm text-stone-400">Aucune prestation disponible pour le moment.</p>
+      )}
+
       <div className="flex flex-col gap-3">
-        {services.map(s => (
-          <button key={s.id} onClick={() => onSelect(s)}
-            className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl border text-left transition-all active:scale-[0.98]
-              ${selected?.id === s.id ? "border-accent-600 bg-accent-50 ring-1 ring-accent-400" : "border-stone-200 bg-white hover:border-accent-400"}`}>
-            <div>
-              <p className="text-sm font-medium text-stone-900">{s.name}</p>
-              <p className="text-xs text-stone-400 mt-0.5">{s.duration_min} min</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-semibold text-stone-900">{s.price} €</span>
-              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${selected?.id === s.id ? "border-accent-600 bg-accent-600" : "border-stone-300"}`}>
-                {selected?.id === s.id && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+        {services.map(s => {
+          const isSel = selected?.id === s.id;
+          return (
+            <button key={s.id} onClick={() => onSelect(s)} aria-pressed={isSel}
+              className={`w-full flex items-center justify-between gap-4 px-4 py-4 rounded-xl border text-left transition-all active:scale-[0.99]
+                ${isSel ? "border-accent-600 bg-accent-50 ring-1 ring-accent-400" : "border-stone-200 bg-white hover:border-accent-400"}`}>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-stone-900">{s.name}</p>
+                <div className="flex items-center gap-4 mt-1.5">
+                  <span className="flex items-center gap-1.5 text-xs text-stone-500">
+                    <ClockIcon className="w-3.5 h-3.5 text-stone-400" />
+                    {s.duration_min} min
+                  </span>
+                  <span className="flex items-center gap-1.5 text-xs text-stone-500">
+                    <TagIcon className="w-3.5 h-3.5 text-stone-400" />
+                    {s.price} €
+                  </span>
+                </div>
               </div>
-            </div>
-          </button>
-        ))}
+              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors
+                ${isSel ? "border-accent-600 bg-accent-600" : "border-stone-300"}`}>
+                {isSel && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+              </div>
+            </button>
+          );
+        })}
       </div>
     </section>
   );
