@@ -5,9 +5,8 @@ import StepSlot from "./steps/StepSlot";
 import StepContact from "./steps/StepContact";
 import StepConfirm from "./steps/StepConfirm";
 import PrestaCard from "./PrestaCard";
-import PrestaContact from "./PrestaContact";
 import BookingSummary from "./BookingSummary";
-import { PhoneIcon, CheckIcon } from "./icons";
+import { CheckIcon } from "./icons";
 
 export type Presta  = {
   id: string; slug: string; name: string; bio?: string; avatar_url?: string; phone?: string;
@@ -56,23 +55,6 @@ export default function BookingFlow({ presta, services }: { presta: Presta; serv
   return (
     <main className="min-h-screen bg-stone-50 py-6 px-4 lg:px-8">
       <div className="w-full max-w-7xl mx-auto">
-        <header className="flex flex-wrap items-center gap-4 mb-6">
-          <div className="min-w-0">
-            <h1 className="text-2xl font-semibold text-stone-900 truncate">{presta.name}</h1>
-            <p className="text-sm text-stone-500 mt-0.5">Réservation en ligne</p>
-          </div>
-          {presta.phone && (
-            <div className="ml-auto flex items-center gap-2 text-sm">
-              <span className="hidden sm:inline text-stone-500">Une question ?</span>
-              <a href={`tel:${presta.phone}`}
-                className="flex items-center gap-2 font-medium text-stone-900 hover:text-accent-600 transition-colors">
-                <PhoneIcon className="text-accent-600" />
-                {presta.phone}
-              </a>
-            </div>
-          )}
-        </header>
-
         <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)_300px] items-start">
           <PrestaCard presta={presta} />
 
@@ -99,8 +81,6 @@ export default function BookingFlow({ presta, services }: { presta: Presta; serv
             </div>
           )}
         </div>
-
-        <PrestaContact presta={presta} />
       </div>
     </main>
   );
