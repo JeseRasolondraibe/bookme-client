@@ -8,7 +8,7 @@ export default async function PrestaPage({ params }: { params: Promise<{ slug: s
 
   const { data: presta } = await supabase
     .from("prestas")
-    .select("id, slug, name, bio, avatar_url, phone, is_active, trial_ends_at")
+    .select("id, slug, name, bio, avatar_url, phone, address, instagram, tiktok, website, other_link, is_active, trial_ends_at")
     .eq("slug", slug)
     .single();
 
@@ -20,7 +20,7 @@ export default async function PrestaPage({ params }: { params: Promise<{ slug: s
 
   const { data: services } = await supabase
     .from("services")
-    .select("id, name, duration_min, price")
+    .select("id, name, duration_min, price, photo_url, description")
     .eq("presta_id", presta.id)
     .eq("is_active", true)
     .order("price");

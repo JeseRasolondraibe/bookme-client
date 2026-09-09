@@ -24,17 +24,29 @@ export default function StepService({ services, selected, onSelect }: {
             <button key={s.id} onClick={() => onSelect(s)} aria-pressed={isSel}
               className={`w-full flex items-center justify-between gap-4 px-4 py-4 rounded-xl border text-left transition-all active:scale-[0.99]
                 ${isSel ? "border-accent-600 bg-accent-50 ring-1 ring-accent-400" : "border-stone-200 bg-white hover:border-accent-400"}`}>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-stone-900">{s.name}</p>
-                <div className="flex items-center gap-4 mt-1.5">
-                  <span className="flex items-center gap-1.5 text-xs text-stone-500">
-                    <ClockIcon className="w-3.5 h-3.5 text-stone-400" />
-                    {s.duration_min} min
-                  </span>
-                  <span className="flex items-center gap-1.5 text-xs text-stone-500">
-                    <TagIcon className="w-3.5 h-3.5 text-stone-400" />
-                    {s.price} €
-                  </span>
+              <div className="flex items-center gap-3 min-w-0">
+                {s.photo_url && (
+                  <img
+                    src={s.photo_url}
+                    alt=""
+                    className="w-12 h-12 rounded-lg object-cover bg-stone-100 flex-shrink-0"
+                  />
+                )}
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-stone-900">{s.name}</p>
+                  {s.description && (
+                    <p className="text-xs text-stone-400 mt-0.5 truncate">{s.description}</p>
+                  )}
+                  <div className="flex items-center gap-4 mt-1.5">
+                    <span className="flex items-center gap-1.5 text-xs text-stone-500">
+                      <ClockIcon className="w-3.5 h-3.5 text-stone-400" />
+                      {s.duration_min} min
+                    </span>
+                    <span className="flex items-center gap-1.5 text-xs text-stone-500">
+                      <TagIcon className="w-3.5 h-3.5 text-stone-400" />
+                      {s.price} €
+                    </span>
+                  </div>
                 </div>
               </div>
               <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors

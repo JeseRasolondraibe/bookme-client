@@ -5,11 +5,15 @@ import StepSlot from "./steps/StepSlot";
 import StepContact from "./steps/StepContact";
 import StepConfirm from "./steps/StepConfirm";
 import PrestaCard from "./PrestaCard";
+import PrestaContact from "./PrestaContact";
 import BookingSummary from "./BookingSummary";
 import { PhoneIcon, CheckIcon } from "./icons";
 
-export type Presta  = { id: string; slug: string; name: string; bio?: string; avatar_url?: string; phone?: string };
-export type Service = { id: string; name: string; duration_min: number; price: number };
+export type Presta  = {
+  id: string; slug: string; name: string; bio?: string; avatar_url?: string; phone?: string;
+  address?: string; instagram?: string; tiktok?: string; website?: string; other_link?: string;
+};
+export type Service = { id: string; name: string; duration_min: number; price: number; photo_url?: string; description?: string };
 export type Booking = { service: Service; date: string; time: string; client_name: string; client_phone: string; client_email?: string };
 
 const STEPS = ["Prestation", "Créneau", "Vos coordonnées", "Confirmation"];
@@ -95,6 +99,8 @@ export default function BookingFlow({ presta, services }: { presta: Presta; serv
             </div>
           )}
         </div>
+
+        <PrestaContact presta={presta} />
       </div>
     </main>
   );
