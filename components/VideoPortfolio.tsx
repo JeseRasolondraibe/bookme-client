@@ -85,7 +85,7 @@ export function TikTokCard({ videoId, caption }: { videoId: string; caption?: st
 
   return (
     <div>
-      <div className="relative w-full aspect-[16/10] overflow-hidden rounded-xl bg-stone-900 shadow-sm">
+      <div className="relative w-full aspect-[4/5] overflow-hidden rounded-xl bg-stone-900 shadow-sm">
         <iframe
           ref={iframeRef}
           src={`https://www.tiktok.com/player/v1/${videoId}?autoplay=1&loop=1&controls=0&progress_bar=0&timestamp=0&music_info=0&description=0&native_context_menu=0`}
