@@ -12,7 +12,8 @@ export type Presta  = {
   id: string; slug: string; name: string; bio?: string; avatar_url?: string; phone?: string;
   address?: string; instagram?: string; tiktok?: string; website?: string; other_link?: string;
 };
-export type Service = { id: string; name: string; duration_min: number; price: number; photo_url?: string; description?: string };
+export type ServiceVideo = { id: string; platform: "tiktok" | "instagram" | "youtube"; video_id: string; position: number };
+export type Service = { id: string; name: string; duration_min: number; price: number; photo_url?: string; description?: string; videos?: ServiceVideo[] };
 export type Booking = { service: Service; date: string; time: string; client_name: string; client_phone: string; client_email?: string };
 
 const STEPS = ["Prestation", "Créneau", "Vos coordonnées", "Confirmation"];
