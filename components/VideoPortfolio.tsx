@@ -2,15 +2,14 @@
 import { useEffect, useRef } from "react";
 import { ServiceVideo } from "./BookingFlow";
 
-// Grille de vidéos qui tournent automatiquement, façon "portfolio vivant" du
-// presta pour ce service. Pour l'instant seul TikTok est géré (embed player
-// officiel). Le composant gère aussi le cas des posts "carousel" (plusieurs
-// images) via l'API postMessage du player TikTok : on fait défiler les
-// images toutes les 3s tant que TikTok confirme qu'il s'agit bien d'un
-// carousel (événement "onImageChange") ; sinon la vidéo tourne juste en loop.
+// Carte vidéo TikTok qui tourne automatiquement (autoplay + loop), avec gestion
+// des posts "carousel" (plusieurs images) via l'API postMessage du player TikTok :
+// on fait défiler les images toutes les 3s tant que TikTok confirme qu'il s'agit
+// bien d'un carousel (événement "onImageChange") ; sinon la vidéo tourne juste en
+// loop, sans intervention. Exportée pour être composée par PortfolioGallery.
 const CAROUSEL_INTERVAL_MS = 3000;
 
-function TikTokCard({ videoId }: { videoId: string }) {
+export function TikTokCard({ videoId, caption }: { videoId: string; caption?: string }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
@@ -35,8 +34,8 @@ function TikTokCard({ videoId }: { videoId: string }) {
 
     // Sonde initiale : on tente navigateTo(1). Si TikTok répond par
     // "onImageChange", c'est un carousel -> on active le défilement auto.
-    // Sinon (silence), c'est un post vidéo classique -> rien à faire, la
-    // vidéo tourne déjà en loop via l'URL de l'iframe.
+    // Sinon (silence), c'est un post vidéo classique -> la vidéo tourne déjà
+    // en loop via l'URL de l'iframe, rien d'autre à faire.
     probeTimeout = setTimeout(() => {
       state.waitingForResponse = true;
       post("navigateTo", 1);
@@ -52,8 +51,6 @@ function TikTokCard({ videoId }: { videoId: string }) {
       state.waitingForResponse = true;
       post("navigateTo", nextIndex);
 
-      // Si aucun nouvel index n'est confirmé, on a atteint la dernière image
-      // du carousel : retour à la première.
       setTimeout(() => {
         if (state.waitingForResponse) {
           state.waitingForResponse = false;
@@ -87,15 +84,18 @@ function TikTokCard({ videoId }: { videoId: string }) {
   }, [videoId]);
 
   return (
-    <div className="relative w-full aspect-[16/10] overflow-hidden rounded-xl bg-stone-900 shadow-sm">
-      <iframe
-        ref={iframeRef}
-        src={`https://www.tiktok.com/player/v1/${videoId}?autoplay=1&loop=1&controls=0&progress_bar=0&timestamp=0&music_info=0&description=0&native_context_menu=0`}
-        allow="autoplay; fullscreen"
-        loading="lazy"
-        className="w-full h-full border-0 block"
-        title={`TikTok ${videoId}`}
-      />
+    <div>
+      <div className="relative w-full aspect-[16/10] overflow-hidden rounded-xl bg-stone-900 shadow-sm">
+        <iframe
+          ref={iframeRef}
+          src={`https://www.tiktok.com/player/v1/${videoId}?autoplay=1&loop=1&controls=0&progress_bar=0&timestamp=0&music_info=0&description=0&native_context_menu=0`}
+          allow="autoplay; fullscreen"
+          loading="lazy"
+          className="w-full h-full border-0 block"
+          title={`TikTok ${videoId}`}
+        />
+      </div>
+      {caption && <p className="mt-1.5 text-xs text-stone-500 truncate">{caption}</p>}
     </div>
   );
 }

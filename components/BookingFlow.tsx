@@ -6,6 +6,7 @@ import StepContact from "./steps/StepContact";
 import StepConfirm from "./steps/StepConfirm";
 import PrestaCard from "./PrestaCard";
 import BookingSummary from "./BookingSummary";
+import PortfolioGallery from "./PortfolioGallery";
 import { CheckIcon } from "./icons";
 
 export type Presta  = {
@@ -82,6 +83,10 @@ export default function BookingFlow({ presta, services }: { presta: Presta; serv
             </div>
           )}
         </div>
+
+        {/* Portfolio toujours visible (indépendant de l'étape de réservation en cours) :
+            dès qu'un service a des vidéos, elles apparaissent ici. */}
+        <PortfolioGallery services={services} />
       </div>
     </main>
   );
