@@ -26,7 +26,7 @@ export default function PortfolioGallery({ services }: { services: Service[] }) 
   if (servicesWithVideos.length === 0) return null;
 
   return (
-    <section className="bg-white rounded-2xl border border-stone-200 p-5 sm:p-7 mt-6">
+    <section className="bg-white rounded-2xl border border-stone-200 p-5 sm:p-7">
       <h2 className="text-lg font-semibold text-stone-900 mb-4">Réalisations</h2>
 
       {servicesWithVideos.length > 1 && (

@@ -55,25 +55,31 @@ export default function BookingFlow({ presta, services }: { presta: Presta; serv
   const patch = (data: Partial<Booking>) => setBooking(b => ({ ...b, ...data }));
 
   return (
-    <main className="min-h-screen bg-stone-50 py-6 px-4 lg:px-8">
-      <div className="w-full max-w-7xl mx-auto">
+    <main className="min-h-screen bg-stone-50 py-6 px-3 sm:px-4 lg:px-6">
+      <div className="w-full max-w-[1600px] mx-auto">
         <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)_300px] items-start">
           <PrestaCard presta={presta} />
 
-          <div className="bg-white rounded-2xl border border-stone-200 p-5 sm:p-7">
-            {step < 4 && (
-              <nav aria-label="Étapes" className="mb-8 pb-7 border-b border-stone-100">
-                <Stepper step={step} />
-                <p className="sm:hidden text-center text-xs text-stone-400 mt-3">
-                  Étape {step} sur {STEPS.length} · <span className="text-accent-600 font-semibold">{STEPS[step - 1]}</span>
-                </p>
-              </nav>
-            )}
+          <div className="flex flex-col gap-6">
+            <div className="bg-white rounded-2xl border border-stone-200 p-5 sm:p-7">
+              {step < 4 && (
+                <nav aria-label="Étapes" className="mb-8 pb-7 border-b border-stone-100">
+                  <Stepper step={step} />
+                  <p className="sm:hidden text-center text-xs text-stone-400 mt-3">
+                    Étape {step} sur {STEPS.length} · <span className="text-accent-600 font-semibold">{STEPS[step - 1]}</span>
+                  </p>
+                </nav>
+              )}
 
-            {step === 1 && <StepService services={services} selected={booking.service} onSelect={s => patch({ service: s })} />}
-            {step === 2 && <StepSlot presta={presta} service={booking.service!} selected={{ date: booking.date, time: booking.time }} onSelect={(date, time) => { patch({ date, time }); setStep(3); }} onBack={() => setStep(1)} />}
-            {step === 3 && <StepContact booking={booking as Booking} onSubmit={data => { patch(data); setStep(4); }} onBack={() => setStep(2)} />}
-            {step === 4 && <StepConfirm booking={booking as Booking} presta={presta} onRestart={() => { setBooking({}); setStep(1); }} />}
+              {step === 1 && <StepService services={services} selected={booking.service} onSelect={s => patch({ service: s })} />}
+              {step === 2 && <StepSlot presta={presta} service={booking.service!} selected={{ date: booking.date, time: booking.time }} onSelect={(date, time) => { patch({ date, time }); setStep(3); }} onBack={() => setStep(1)} />}
+              {step === 3 && <StepContact booking={booking as Booking} onSubmit={data => { patch(data); setStep(4); }} onBack={() => setStep(2)} />}
+              {step === 4 && <StepConfirm booking={booking as Booking} presta={presta} onRestart={() => { setBooking({}); setStep(1); }} />}
+            </div>
+
+            {/* Toujours visible, juste sous la carte de réservation (indépendant de la
+                hauteur de la sidebar) : dès qu'un service a des vidéos, elles apparaissent ici. */}
+            <PortfolioGallery services={services} />
           </div>
 
           {/* L'écran de confirmation se suffit à lui-même : le récap latéral ferait doublon. */}
@@ -83,10 +89,6 @@ export default function BookingFlow({ presta, services }: { presta: Presta; serv
             </div>
           )}
         </div>
-
-        {/* Portfolio toujours visible (indépendant de l'étape de réservation en cours) :
-            dès qu'un service a des vidéos, elles apparaissent ici. */}
-        <PortfolioGallery services={services} />
       </div>
     </main>
   );
