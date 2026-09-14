@@ -19,7 +19,12 @@ export default function StepContact({ booking, onSubmit, onBack }: {
   const [email,   setEmail]   = useState("");
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState("");
-  const valid = name.trim().length > 1 && phone.trim().length >= 8;
+  // Format volontairement permissif (pas de RFC 5322 complet) : on veut juste
+  // écarter les fautes de frappe grossières, pas rejeter des adresses
+  // valides mais inhabituelles. L'email est obligatoire depuis que c'est le
+  // seul canal de confirmation/rappel (le SMS a été retiré).
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const valid = name.trim().length > 1 && phone.trim().length >= 8 && emailValid;
 
   async function handleSubmit() {
     if (!valid) return;
@@ -35,12 +40,12 @@ export default function StepContact({ booking, onSubmit, onBack }: {
         },
         body: JSON.stringify({
           slug, service_id: booking.service.id, date: booking.date, time: booking.time,
-          client_name: name.trim(), client_phone: phone.trim(), client_email: email.trim() || undefined,
+          client_name: name.trim(), client_phone: phone.trim(), client_email: email.trim(),
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Erreur lors de la réservation");
-      onSubmit({ client_name: name, client_phone: phone, client_email: email || undefined });
+      onSubmit({ client_name: name, client_phone: phone, client_email: email });
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -77,9 +82,10 @@ export default function StepContact({ booking, onSubmit, onBack }: {
             className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-900 placeholder:text-stone-300 focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-400 bg-white" />
         </div>
         <div>
-          <label className="text-xs font-medium text-stone-500 mb-1.5 block">Email <span className="text-stone-300">(optionnel)</span></label>
+          <label className="text-xs font-medium text-stone-500 mb-1.5 block">Email <span className="text-accent-600">*</span></label>
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="camille@mail.com"
             className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-900 placeholder:text-stone-300 focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-400 bg-white" />
+          <p className="text-xs text-stone-400 mt-1.5">Pour la confirmation et le rappel de votre rendez-vous.</p>
         </div>
       </div>
       {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
