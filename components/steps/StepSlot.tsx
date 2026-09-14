@@ -129,86 +129,100 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
         </span>
       </div>
 
-      <div className="bg-white rounded-xl border border-stone-200 p-4 mb-4">
-        <div className="flex items-center justify-between mb-3">
-          <button onClick={prevMonth} className="text-stone-400 hover:text-stone-700 px-1 text-lg">‹</button>
-          <span className="text-sm font-semibold text-stone-900">{MONTHS[month]} {year}</span>
-          <button onClick={nextMonth} className="text-stone-400 hover:text-stone-700 px-1 text-lg">›</button>
+      {/* Calendrier et créneaux côte à côte à partir de md : sur mobile la
+          colonne unique reprend l'empilement d'origine. */}
+      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-start">
+        <div className="bg-white rounded-xl border border-stone-200 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <button onClick={prevMonth} className="text-stone-400 hover:text-stone-700 px-1 text-lg">‹</button>
+            <span className="text-sm font-semibold text-stone-900">{MONTHS[month]} {year}</span>
+            <button onClick={nextMonth} className="text-stone-400 hover:text-stone-700 px-1 text-lg">›</button>
+          </div>
+
+          <div className="grid grid-cols-7 gap-0.5 mb-1">
+            {DAYS.map((d, i) => <div key={i} className="text-center text-xs text-stone-400 py-1">{d}</div>)}
+          </div>
+
+          <div className="grid grid-cols-7 gap-0.5">
+            {Array.from({ length: firstDay }).map((_, i) => <div key={`e-${i}`} />)}
+            {Array.from({ length: daysCount }).map((_, i) => {
+              const day    = i + 1;
+              const iso    = toISO(year, month, day);
+              const isPast = iso < todayStr;
+              const isSel  = iso === date;
+              const status = dayStatus[iso] as DayStatus | undefined;
+              const clickable = !isPast && status === "available";
+
+              return (
+                <button key={day}
+                  disabled={!clickable}
+                  onClick={() => clickable && setDate(iso)}
+                  className={`h-10 w-full text-xs rounded-lg transition-colors flex flex-col items-center justify-center gap-0.5
+                    ${isPast ? "text-stone-200 cursor-default" : getDayStyle(iso, isSel)}`}>
+                  <span>{day}</span>
+                  {!isPast && getDayIndicator(iso, isSel)}
+                </button>
+              );
+            })}
+          </div>
+
+          {loadingMonth && (
+            <p className="text-center text-xs text-stone-400 mt-2">Chargement des disponibilités...</p>
+          )}
+
+          <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-stone-100">
+            <div className="flex items-center gap-1.5">
+              <span className="text-green-500 text-xs">●</span>
+              <span className="text-xs text-stone-400">Disponible</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-orange-400 text-xs">●</span>
+              <span className="text-xs text-stone-400">Complet</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-red-400 text-xs">✕</span>
+              <span className="text-xs text-stone-400">Fermé</span>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-7 gap-0.5 mb-1">
-          {DAYS.map((d, i) => <div key={i} className="text-center text-xs text-stone-400 py-1">{d}</div>)}
-        </div>
-
-        <div className="grid grid-cols-7 gap-0.5">
-          {Array.from({ length: firstDay }).map((_, i) => <div key={`e-${i}`} />)}
-          {Array.from({ length: daysCount }).map((_, i) => {
-            const day    = i + 1;
-            const iso    = toISO(year, month, day);
-            const isPast = iso < todayStr;
-            const isSel  = iso === date;
-            const status = dayStatus[iso] as DayStatus | undefined;
-            const clickable = !isPast && status === "available";
-
-            return (
-              <button key={day}
-                disabled={!clickable}
-                onClick={() => clickable && setDate(iso)}
-                className={`h-10 w-full text-xs rounded-lg transition-colors flex flex-col items-center justify-center gap-0.5
-                  ${isPast ? "text-stone-200 cursor-default" : getDayStyle(iso, isSel)}`}>
-                <span>{day}</span>
-                {!isPast && getDayIndicator(iso, isSel)}
-              </button>
-            );
-          })}
-        </div>
-
-        {loadingMonth && (
-          <p className="text-center text-xs text-stone-400 mt-2">Chargement des disponibilités...</p>
-        )}
-
-        <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-stone-100">
-          <div className="flex items-center gap-1.5">
-            <span className="text-green-500 text-xs">●</span>
-            <span className="text-xs text-stone-400">Disponible</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-orange-400 text-xs">●</span>
-            <span className="text-xs text-stone-400">Complet</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-red-400 text-xs">✕</span>
-            <span className="text-xs text-stone-400">Fermé</span>
-          </div>
+        {/* Colonne créneaux. Sur mobile elle n'apparaît qu'une fois une date
+            choisie ; sur desktop elle garde sa place avec un message d'invite,
+            pour que le calendrier ne se déplace pas au moment du clic. */}
+        <div className={`${date ? "block" : "hidden md:block"} bg-white rounded-xl border border-stone-200 p-4 md:max-h-[420px] md:overflow-y-auto`}>
+          {!date && (
+            <p className="text-sm text-stone-400 text-center py-10">
+              Choisis une date pour voir les créneaux disponibles.
+            </p>
+          )}
+          {date && (
+            <div className="flex flex-col gap-4">
+              {loadSlots && <p className="text-sm text-stone-400">Chargement...</p>}
+              {!loadSlots && slots.length === 0 && <p className="text-sm text-stone-400">Aucun créneau ce jour. Essaie une autre date.</p>}
+              {!loadSlots && morningSlots.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-stone-500 mb-2 uppercase tracking-wide">Matin</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {morningSlots.map(s => (
+                      <SlotButton key={s} slot={s} selected={time === s} onSelect={() => setTime(s)} />
+                    ))}
+                  </div>
+                </div>
+              )}
+              {!loadSlots && afternoonSlots.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-stone-500 mb-2 uppercase tracking-wide">Après-midi</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {afternoonSlots.map(s => (
+                      <SlotButton key={s} slot={s} selected={time === s} onSelect={() => setTime(s)} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
-
-      {date && (
-        <div className="flex flex-col gap-4">
-          {loadSlots && <p className="text-sm text-stone-400">Chargement...</p>}
-          {!loadSlots && slots.length === 0 && <p className="text-sm text-stone-400">Aucun créneau ce jour. Essaie une autre date.</p>}
-          {!loadSlots && morningSlots.length > 0 && (
-            <div>
-              <p className="text-xs font-medium text-stone-500 mb-2 uppercase tracking-wide">Matin</p>
-              <div className="grid grid-cols-3 gap-2">
-                {morningSlots.map(s => (
-                  <SlotButton key={s} slot={s} selected={time === s} onSelect={() => setTime(s)} />
-                ))}
-              </div>
-            </div>
-          )}
-          {!loadSlots && afternoonSlots.length > 0 && (
-            <div>
-              <p className="text-xs font-medium text-stone-500 mb-2 uppercase tracking-wide">Après-midi</p>
-              <div className="grid grid-cols-3 gap-2">
-                {afternoonSlots.map(s => (
-                  <SlotButton key={s} slot={s} selected={time === s} onSelect={() => setTime(s)} />
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
 
       {date && time && (
         <button onClick={() => onSelect(date, time)}
