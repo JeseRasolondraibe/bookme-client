@@ -100,24 +100,28 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
   const morningSlots   = slots.filter(s => parseInt(s.slice(0, 2), 10) < 12);
   const afternoonSlots = slots.filter(s => parseInt(s.slice(0, 2), 10) >= 12);
 
+  // La disponibilité est portée par le FOND de la case, pas par une pastille
+  // sous le chiffre : plus lisible d'un coup d'oeil, et la case redevient une
+  // simple ligne (le calendrier perd ~30% de hauteur au passage).
   function getDayStyle(iso: string, isSel: boolean) {
     const status = dayStatus[iso] as DayStatus | undefined;
-    if (isSel) return "bg-accent-600 text-white font-semibold";
-    if (!status || status === "loading") return "text-stone-300 animate-pulse";
-    if (status === "available") return "hover:bg-green-50 text-stone-700 cursor-pointer";
-    if (status === "full")      return "text-orange-400 cursor-default";
-    if (status === "closed")    return "text-stone-300 cursor-default";
-    return "text-stone-300 cursor-default";
+    if (isSel) return "bg-accent-600 text-white font-semibold shadow-sm";
+    if (!status || status === "loading") return "bg-stone-50 text-stone-300 animate-pulse";
+    if (status === "available") return "bg-green-100 text-green-800 font-medium hover:bg-green-200 cursor-pointer";
+    if (status === "full")      return "bg-orange-100 text-orange-700 cursor-default";
+    if (status === "closed")    return "bg-stone-100 text-stone-400 cursor-default";
+    return "bg-stone-50 text-stone-300 cursor-default";
   }
 
-  function getDayIndicator(iso: string, isSel: boolean) {
+  // Le fond coloré seul ne suffit pas (daltonisme, impression N&B) : chaque
+  // case porte aussi son statut en texte, lu par les lecteurs d'écran et
+  // affiché au survol.
+  function getDayTitle(iso: string) {
     const status = dayStatus[iso] as DayStatus | undefined;
-    if (!status || status === "loading" || status === "past" || status === "unknown") return null;
-    if (isSel)              return <span className="text-[7px] text-white">●</span>;
-    if (status === "available") return <span className="text-[7px] text-green-500">●</span>;
-    if (status === "full")      return <span className="text-[7px] text-orange-400">●</span>;
-    if (status === "closed")    return <span className="text-[7px] text-red-400">✕</span>;
-    return null;
+    if (status === "available") return "Disponible";
+    if (status === "full")      return "Complet";
+    if (status === "closed")    return "Fermé";
+    return "";
   }
 
   return (
@@ -139,11 +143,11 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
             <button onClick={nextMonth} className="text-stone-400 hover:text-stone-700 px-1 text-lg">›</button>
           </div>
 
-          <div className="grid grid-cols-7 gap-0.5 mb-1">
+          <div className="grid grid-cols-7 gap-1 mb-1">
             {DAYS.map((d, i) => <div key={i} className="text-center text-xs text-stone-400 py-1">{d}</div>)}
           </div>
 
-          <div className="grid grid-cols-7 gap-0.5">
+          <div className="grid grid-cols-7 gap-1">
             {Array.from({ length: firstDay }).map((_, i) => <div key={`e-${i}`} />)}
             {Array.from({ length: daysCount }).map((_, i) => {
               const day    = i + 1;
@@ -157,10 +161,11 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
                 <button key={day}
                   disabled={!clickable}
                   onClick={() => clickable && setDate(iso)}
-                  className={`h-10 w-full text-xs rounded-lg transition-colors flex flex-col items-center justify-center gap-0.5
+                  title={isPast ? "" : getDayTitle(iso)}
+                  aria-label={`${day} ${MONTHS[month]}${isPast ? "" : ` — ${getDayTitle(iso)}`}`}
+                  className={`aspect-square w-full text-sm rounded-lg transition-colors flex items-center justify-center
                     ${isPast ? "text-stone-200 cursor-default" : getDayStyle(iso, isSel)}`}>
-                  <span>{day}</span>
-                  {!isPast && getDayIndicator(iso, isSel)}
+                  {day}
                 </button>
               );
             })}
@@ -172,16 +177,16 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
 
           <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-stone-100">
             <div className="flex items-center gap-1.5">
-              <span className="text-green-500 text-xs">●</span>
-              <span className="text-xs text-stone-400">Disponible</span>
+              <span className="h-3 w-3 rounded bg-green-100 border border-green-200" />
+              <span className="text-xs text-stone-500">Disponible</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-orange-400 text-xs">●</span>
-              <span className="text-xs text-stone-400">Complet</span>
+              <span className="h-3 w-3 rounded bg-orange-100 border border-orange-200" />
+              <span className="text-xs text-stone-500">Complet</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-red-400 text-xs">✕</span>
-              <span className="text-xs text-stone-400">Fermé</span>
+              <span className="h-3 w-3 rounded bg-stone-100 border border-stone-200" />
+              <span className="text-xs text-stone-500">Fermé</span>
             </div>
           </div>
         </div>
