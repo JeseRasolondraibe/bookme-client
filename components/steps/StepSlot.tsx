@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Presta, Service } from "../BookingFlow";
+import { resolveHorizonDate, formatHorizonLabel } from "@/lib/horizon";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://flrtdhzcimbkbcgczmea.supabase.co";
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -59,6 +60,14 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
   const daysCount = new Date(year, month + 1, 0).getDate();
   const firstDay  = (new Date(year, month, 1).getDay() + 6) % 7;
 
+  const horizonStr   = resolveHorizonDate(presta, todayStr);
+  const [hY, hM]     = horizonStr.split("-").map(Number);
+  const currentIndex = year * 12 + month;
+  const minIndex     = today.getFullYear() * 12 + today.getMonth();
+  const maxIndex     = hY * 12 + (hM - 1);
+  const canPrev      = currentIndex > minIndex;
+  const canNext      = currentIndex < maxIndex;
+
   useEffect(() => {
     setDayStatus({});
     setDate(null);
@@ -69,7 +78,7 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
     const futureDays: string[] = [];
     for (let d = 1; d <= daysCount; d++) {
       const iso = toISO(year, month, d);
-      if (iso >= todayStr) futureDays.push(iso);
+      if (iso >= todayStr && iso <= horizonStr) futureDays.push(iso);
     }
 
     Promise.all(
@@ -79,7 +88,7 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
       results.forEach(({ iso, status }) => { map[iso] = status; });
       setDayStatus(map);
     }).finally(() => setLoadingMonth(false));
-  }, [year, month]);
+  }, [year, month, horizonStr]);
 
   useEffect(() => {
     if (!date) return;
@@ -93,8 +102,14 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
       .finally(() => setLoadSlots(false));
   }, [date]);
 
-  const prevMonth = () => month === 0 ? (setMonth(11), setYear(y => y-1)) : setMonth(m => m-1);
-  const nextMonth = () => month === 11 ? (setMonth(0), setYear(y => y+1)) : setMonth(m => m+1);
+  const prevMonth = () => {
+    if (!canPrev) return;
+    month === 0 ? (setMonth(11), setYear(y => y-1)) : setMonth(m => m-1);
+  };
+  const nextMonth = () => {
+    if (!canNext) return;
+    month === 11 ? (setMonth(0), setYear(y => y+1)) : setMonth(m => m+1);
+  };
 
   // Regroupement purement présentationnel des créneaux déjà chargés (aucun appel réseau ici).
   const morningSlots   = slots.filter(s => parseInt(s.slice(0, 2), 10) < 12);
@@ -138,9 +153,11 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
       <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-start">
         <div className="bg-white rounded-xl border border-stone-200 p-4">
           <div className="flex items-center justify-between mb-3">
-            <button onClick={prevMonth} className="text-stone-400 hover:text-stone-700 px-1 text-lg">‹</button>
+            <button onClick={prevMonth} disabled={!canPrev} aria-label="Mois précédent"
+              className="px-1 text-lg text-stone-400 enabled:hover:text-stone-700 disabled:text-stone-200 disabled:cursor-default">‹</button>
             <span className="text-sm font-semibold text-stone-900">{MONTHS[month]} {year}</span>
-            <button onClick={nextMonth} className="text-stone-400 hover:text-stone-700 px-1 text-lg">›</button>
+            <button onClick={nextMonth} disabled={!canNext} aria-label="Mois suivant"
+              className="px-1 text-lg text-stone-400 enabled:hover:text-stone-700 disabled:text-stone-200 disabled:cursor-default">›</button>
           </div>
 
           <div className="grid grid-cols-7 gap-1 mb-1">
@@ -152,19 +169,21 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
             {Array.from({ length: daysCount }).map((_, i) => {
               const day    = i + 1;
               const iso    = toISO(year, month, day);
-              const isPast = iso < todayStr;
-              const isSel  = iso === date;
-              const status = dayStatus[iso] as DayStatus | undefined;
-              const clickable = !isPast && status === "available";
+              const isPast   = iso < todayStr;
+              const isBeyond = iso > horizonStr;
+              const isSel    = iso === date;
+              const status   = dayStatus[iso] as DayStatus | undefined;
+              const clickable = !isPast && !isBeyond && status === "available";
+              const muted = isPast || isBeyond;
 
               return (
                 <button key={day}
                   disabled={!clickable}
                   onClick={() => clickable && setDate(iso)}
-                  title={isPast ? "" : getDayTitle(iso)}
-                  aria-label={`${day} ${MONTHS[month]}${isPast ? "" : ` — ${getDayTitle(iso)}`}`}
+                  title={isPast ? "" : isBeyond ? "Pas encore ouvert à la réservation" : getDayTitle(iso)}
+                  aria-label={`${day} ${MONTHS[month]}${isPast ? "" : isBeyond ? " — pas encore ouvert à la réservation" : ` — ${getDayTitle(iso)}`}`}
                   className={`aspect-square w-full text-sm rounded-lg transition-colors flex items-center justify-center
-                    ${isPast ? "text-stone-200 cursor-default" : getDayStyle(iso, isSel)}`}>
+                    ${muted ? "text-stone-200 cursor-default" : getDayStyle(iso, isSel)}`}>
                   {day}
                 </button>
               );
@@ -174,6 +193,10 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
           {loadingMonth && (
             <p className="text-center text-xs text-stone-400 mt-2">Chargement des disponibilités...</p>
           )}
+
+          <p className="text-center text-xs text-stone-400 mt-2">
+            Réservations ouvertes jusqu&apos;au {formatHorizonLabel(horizonStr)}.
+          </p>
 
           <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-stone-100">
             <div className="flex items-center gap-1.5">

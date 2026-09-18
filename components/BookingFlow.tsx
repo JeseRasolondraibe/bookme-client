@@ -12,6 +12,8 @@ import { CheckIcon } from "./icons";
 export type Presta  = {
   id: string; slug: string; name: string; bio?: string; avatar_url?: string; phone?: string;
   address?: string; instagram?: string; tiktok?: string; website?: string; other_link?: string;
+  // Horizon de réservation, cf. lib/horizon.ts
+  booking_horizon_months?: number | null; booking_horizon_date?: string | null;
 };
 export type ServiceVideo = { id: string; platform: "tiktok" | "instagram" | "youtube"; video_id: string; position: number };
 export type Service = { id: string; name: string; duration_min: number; price: number; photo_url?: string; description?: string; videos?: ServiceVideo[] };

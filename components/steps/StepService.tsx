@@ -1,6 +1,7 @@
 "use client";
 import { Service } from "../BookingFlow";
 import { ClockIcon, TagIcon } from "../icons";
+import { formatDuration } from "@/lib/duration";
 
 // La sélection ne fait plus avancer le flow toute seule : le client valide via
 // le bouton « Continuer » du récapitulatif, ce qui lui laisse le temps de comparer.
@@ -40,7 +41,7 @@ export default function StepService({ services, selected, onSelect }: {
                   <div className="flex items-center gap-4 mt-1.5">
                     <span className="flex items-center gap-1.5 text-xs text-stone-500">
                       <ClockIcon className="w-3.5 h-3.5 text-stone-400" />
-                      {s.duration_min} min
+                      {formatDuration(s.duration_min)}
                     </span>
                     <span className="flex items-center gap-1.5 text-xs text-stone-500">
                       <TagIcon className="w-3.5 h-3.5 text-stone-400" />

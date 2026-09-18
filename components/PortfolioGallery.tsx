@@ -2,6 +2,7 @@
 import { useMemo, useState } from "react";
 import { Service } from "./BookingFlow";
 import { TikTokCard } from "./VideoPortfolio";
+import { formatDuration } from "@/lib/duration";
 
 // Galerie "Réalisations" : dès qu'un service a au moins une vidéo, elle
 // s'affiche automatiquement ici -- pas besoin que le client sélectionne le
@@ -59,7 +60,7 @@ export default function PortfolioGallery({ services }: { services: Service[] }) 
             <TikTokCard
               key={video.id}
               videoId={video.video_id}
-              caption={`${service.name} · ${service.duration_min} min · ${service.price} €`}
+              caption={`${service.name} · ${formatDuration(service.duration_min)} · ${service.price} €`}
             />
           ) : null,
         )}

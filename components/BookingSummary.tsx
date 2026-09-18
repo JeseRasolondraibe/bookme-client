@@ -1,6 +1,7 @@
 "use client";
 import { Booking } from "./BookingFlow";
 import { ClockIcon, TagIcon, CalendarIcon, LockIcon } from "./icons";
+import { formatDuration } from "@/lib/duration";
 
 function formatDate(iso: string) {
   return new Date(`${iso}T00:00:00`).toLocaleDateString("fr-FR", {
@@ -28,7 +29,7 @@ export default function BookingSummary({ booking, step, onContinue }: {
         <div className="flex flex-col gap-2 mt-3">
           <p className="flex items-center gap-2 text-sm text-stone-500">
             <ClockIcon className="w-3.5 h-3.5 text-stone-400" />
-            {service.duration_min} min
+            {formatDuration(service.duration_min)}
           </p>
           <p className="flex items-center gap-2 text-sm text-stone-500">
             <TagIcon className="w-3.5 h-3.5 text-stone-400" />
