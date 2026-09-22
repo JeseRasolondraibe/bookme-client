@@ -12,7 +12,11 @@ export default function StepConfirm({ booking, presta, onRestart }: {
     const start = new Date(`${booking.date}T${booking.time}:00`);
     const end   = new Date(start.getTime() + booking.service.duration_min * 60000);
     const fmt   = (d: Date) => d.toISOString().replace(/[-:]/g,"").split(".")[0] + "Z";
-    window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(booking.service.name + " chez " + presta.name)}&dates=${fmt(start)}/${fmt(end)}`, "_blank");
+    // L'adresse du jour, pas celle du profil : pour un presta multi-adresses
+    // ce sont deux choses différentes.
+    const place = booking.location?.address ?? presta.address;
+    const locationParam = place ? `&location=${encodeURIComponent(place)}` : "";
+    window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(booking.service.name + " chez " + presta.name)}&dates=${fmt(start)}/${fmt(end)}${locationParam}`, "_blank");
   }
 
   return (
@@ -35,6 +39,15 @@ export default function StepConfirm({ booking, presta, onRestart }: {
         <div className="flex justify-between text-sm py-1.5 border-b border-stone-100">
           <span className="text-stone-500">Heure</span><span className="font-medium text-stone-900">{booking.time}</span>
         </div>
+        {booking.location && (
+          <div className="flex justify-between gap-4 text-sm py-1.5 border-b border-stone-100">
+            <span className="text-stone-500 shrink-0">Adresse</span>
+            <span className="font-medium text-stone-900 text-right">
+              {booking.location.label && <span className="block">{booking.location.label}</span>}
+              {booking.location.address}
+            </span>
+          </div>
+        )}
         <div className="flex justify-between text-sm py-1.5">
           <span className="text-stone-500">Prix</span><span className="font-semibold text-stone-900">{booking.service.price} €</span>
         </div>

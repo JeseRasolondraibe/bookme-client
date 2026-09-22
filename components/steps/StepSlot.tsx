@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Presta, Service } from "../BookingFlow";
+import { BookingLocation, Presta, Service } from "../BookingFlow";
 import { resolveHorizonDate, formatHorizonLabel } from "@/lib/horizon";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://flrtdhzcimbkbcgczmea.supabase.co";
@@ -15,17 +15,34 @@ function toISO(y: number, m: number, d: number) {
 
 type DayStatus = "available" | "full" | "closed" | "past" | "loading" | "unknown";
 
-async function fetchDayStatus(slug: string, serviceId: string, date: string): Promise<DayStatus> {
-  try {
-    const r = await fetch(
-      `${SUPABASE_URL}/functions/v1/slots?slug=${slug}&service_id=${serviceId}&date=${date}`,
-      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }, cache: "no-store" }
-    );
-    const d = await r.json();
-    if (!d.open) return "closed";
-    if (Array.isArray(d.slots) && d.slots.length > 0) return "available";
-    return "full";
-  } catch { return "unknown"; }
+interface DayAvailability {
+  open:  boolean;
+  slots: string[];
+  /** Où se déroule le rdv ce jour-là. Absent = presta sans adresse. */
+  location?: BookingLocation | null;
+}
+
+/**
+ * Récupère les disponibilités de tout le mois en une seule requête.
+ *
+ * Avant, le calendrier appelait la fonction "slots" une fois par jour affiché
+ * (~30 requêtes pour peindre un mois, ~150 requêtes SQL derrière), puis une
+ * 31e au clic sur une date alors que les créneaux avaient déjà été reçus et
+ * jetés. La réponse "mois" porte les créneaux complets, donc le clic sur un
+ * jour ne déclenche plus aucun appel réseau.
+ *
+ * Pas de `cache: "no-store"` ici : on laisse le navigateur honorer le
+ * Cache-Control court renvoyé par la fonction, pour qu'un aller-retour entre
+ * deux mois ne retape pas la base.
+ */
+async function fetchMonth(slug: string, serviceId: string, month: string): Promise<Record<string, DayAvailability>> {
+  const r = await fetch(
+    `${SUPABASE_URL}/functions/v1/slots?slug=${slug}&service_id=${serviceId}&month=${month}`,
+    { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
+  );
+  if (!r.ok) throw new Error(`slots ${r.status}`);
+  const d = await r.json();
+  return (d.days ?? {}) as Record<string, DayAvailability>;
 }
 
 function SlotButton({ slot, selected, onSelect }: { slot: string; selected: boolean; onSelect: () => void }) {
@@ -43,7 +60,7 @@ function SlotButton({ slot, selected, onSelect }: { slot: string; selected: bool
 export default function StepSlot({ presta, service, selected, onSelect, onBack }: {
   presta: Presta; service: Service;
   selected: { date?: string; time?: string };
-  onSelect: (date: string, time: string) => void;
+  onSelect: (date: string, time: string, location: BookingLocation | null) => void;
   onBack: () => void;
 }) {
   const today = new Date();
@@ -51,10 +68,9 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
   const [month,        setMonth]        = useState(today.getMonth());
   const [date,         setDate]         = useState<string | null>(selected.date ?? null);
   const [time,         setTime]         = useState<string | null>(selected.time ?? null);
-  const [slots,        setSlots]        = useState<string[]>([]);
-  const [loadSlots,    setLoadSlots]    = useState(false);
-  const [dayStatus,    setDayStatus]    = useState<Record<string, DayStatus>>({});
+  const [days,         setDays]         = useState<Record<string, DayAvailability>>({});
   const [loadingMonth, setLoadingMonth] = useState(false);
+  const [monthError,   setMonthError]   = useState(false);
 
   const todayStr  = toISO(today.getFullYear(), today.getMonth(), today.getDate());
   const daysCount = new Date(year, month + 1, 0).getDate();
@@ -68,39 +84,46 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
   const canPrev      = currentIndex > minIndex;
   const canNext      = currentIndex < maxIndex;
 
+  // `cancelled` évite qu'une réponse lente d'un mois qu'on vient de quitter
+  // n'écrase les disponibilités du mois affiché (l'utilisateur peut enchaîner
+  // les flèches plus vite que le réseau ne répond).
   useEffect(() => {
-    setDayStatus({});
+    let cancelled = false;
+
+    setDays({});
     setDate(null);
     setTime(null);
-    setSlots([]);
+    setMonthError(false);
     setLoadingMonth(true);
 
-    const futureDays: string[] = [];
-    for (let d = 1; d <= daysCount; d++) {
-      const iso = toISO(year, month, d);
-      if (iso >= todayStr && iso <= horizonStr) futureDays.push(iso);
-    }
+    const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
 
-    Promise.all(
-      futureDays.map(iso => fetchDayStatus(presta.slug, service.id, iso).then(status => ({ iso, status })))
-    ).then(results => {
-      const map: Record<string, DayStatus> = {};
-      results.forEach(({ iso, status }) => { map[iso] = status; });
-      setDayStatus(map);
-    }).finally(() => setLoadingMonth(false));
-  }, [year, month, horizonStr]);
+    fetchMonth(presta.slug, service.id, monthKey)
+      .then(d => { if (!cancelled) setDays(d); })
+      .catch(() => { if (!cancelled) setMonthError(true); })
+      .finally(() => { if (!cancelled) setLoadingMonth(false); });
 
-  useEffect(() => {
-    if (!date) return;
-    setLoadSlots(true); setSlots([]); setTime(null);
-    fetch(
-      `${SUPABASE_URL}/functions/v1/slots?slug=${presta.slug}&service_id=${service.id}&date=${date}`,
-      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }, cache: "no-store" }
-    )
-      .then(r => r.json()).then(d => setSlots(d.slots ?? []))
-      .catch(() => setSlots([]))
-      .finally(() => setLoadSlots(false));
-  }, [date]);
+    return () => { cancelled = true; };
+  }, [year, month, presta.slug, service.id]);
+
+  // Les créneaux du jour sélectionné sont déjà dans la réponse du mois.
+  const slots = date ? (days[date]?.slots ?? []) : [];
+  // Idem pour le lieu : il voyage avec la disponibilité du jour, aucun appel
+  // réseau supplémentaire au clic sur une date.
+  const location = date ? (days[date]?.location ?? null) : null;
+
+  /**
+   * Un jour absent de la réponse est un jour que le serveur ne propose pas
+   * (passé, ou au-delà de l'horizon) : il est fermé, pas inconnu.
+   */
+  function statusOf(iso: string): DayStatus {
+    if (iso < todayStr)  return "past";
+    if (loadingMonth)    return "loading";
+    if (monthError)      return "unknown";
+    const day = days[iso];
+    if (!day || !day.open) return "closed";
+    return day.slots.length > 0 ? "available" : "full";
+  }
 
   const prevMonth = () => {
     if (!canPrev) return;
@@ -119,9 +142,9 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
   // sous le chiffre : plus lisible d'un coup d'oeil, et la case redevient une
   // simple ligne (le calendrier perd ~30% de hauteur au passage).
   function getDayStyle(iso: string, isSel: boolean) {
-    const status = dayStatus[iso] as DayStatus | undefined;
+    const status = statusOf(iso);
     if (isSel) return "bg-accent-600 text-white font-semibold shadow-sm";
-    if (!status || status === "loading") return "bg-stone-50 text-stone-300 animate-pulse";
+    if (status === "loading") return "bg-stone-50 text-stone-300 animate-pulse";
     if (status === "available") return "bg-green-100 text-green-800 font-medium hover:bg-green-200 cursor-pointer";
     if (status === "full")      return "bg-orange-100 text-orange-700 cursor-default";
     if (status === "closed")    return "bg-stone-100 text-stone-400 cursor-default";
@@ -132,7 +155,7 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
   // case porte aussi son statut en texte, lu par les lecteurs d'écran et
   // affiché au survol.
   function getDayTitle(iso: string) {
-    const status = dayStatus[iso] as DayStatus | undefined;
+    const status = statusOf(iso);
     if (status === "available") return "Disponible";
     if (status === "full")      return "Complet";
     if (status === "closed")    return "Fermé";
@@ -172,7 +195,7 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
               const isPast   = iso < todayStr;
               const isBeyond = iso > horizonStr;
               const isSel    = iso === date;
-              const status   = dayStatus[iso] as DayStatus | undefined;
+              const status   = statusOf(iso);
               const clickable = !isPast && !isBeyond && status === "available";
               const muted = isPast || isBeyond;
 
@@ -192,6 +215,12 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
 
           {loadingMonth && (
             <p className="text-center text-xs text-stone-400 mt-2">Chargement des disponibilités...</p>
+          )}
+
+          {monthError && !loadingMonth && (
+            <p className="text-center text-xs text-orange-600 mt-2">
+              Disponibilités indisponibles pour le moment. Réessaie dans un instant.
+            </p>
           )}
 
           <p className="text-center text-xs text-stone-400 mt-2">
@@ -225,9 +254,24 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
           )}
           {date && (
             <div className="flex flex-col gap-4">
-              {loadSlots && <p className="text-sm text-stone-400">Chargement...</p>}
-              {!loadSlots && slots.length === 0 && <p className="text-sm text-stone-400">Aucun créneau ce jour. Essaie une autre date.</p>}
-              {!loadSlots && morningSlots.length > 0 && (
+              {/* Le lieu est affiché AVANT les créneaux : pour un presta qui
+                  tourne entre plusieurs adresses, c'est une information de
+                  choix, pas un détail de confirmation. */}
+              {location && (
+                <div className="flex items-start gap-2 rounded-xl bg-accent-50 px-3 py-2.5">
+                  <svg aria-hidden="true" className="mt-0.5 w-4 h-4 shrink-0 text-accent-600" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                  <p className="text-xs leading-snug text-stone-600">
+                    {location.label && <span className="font-semibold text-stone-900">{location.label}<br /></span>}
+                    {location.address}
+                  </p>
+                </div>
+              )}
+              {slots.length === 0 && <p className="text-sm text-stone-400">Aucun créneau ce jour. Essaie une autre date.</p>}
+              {morningSlots.length > 0 && (
                 <div>
                   <p className="text-xs font-medium text-stone-500 mb-2 uppercase tracking-wide">Matin</p>
                   <div className="grid grid-cols-3 gap-2">
@@ -237,7 +281,7 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
                   </div>
                 </div>
               )}
-              {!loadSlots && afternoonSlots.length > 0 && (
+              {afternoonSlots.length > 0 && (
                 <div>
                   <p className="text-xs font-medium text-stone-500 mb-2 uppercase tracking-wide">Après-midi</p>
                   <div className="grid grid-cols-3 gap-2">
@@ -253,7 +297,7 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
       </div>
 
       {date && time && (
-        <button onClick={() => onSelect(date, time)}
+        <button onClick={() => onSelect(date, time, location)}
           className="mt-6 w-full bg-accent-600 hover:bg-accent-700 text-white font-medium py-3.5 rounded-xl shadow-sm transition-all active:scale-[0.98]">
           Confirmer ce créneau →
         </button>

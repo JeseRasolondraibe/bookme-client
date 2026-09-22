@@ -17,7 +17,12 @@ export type Presta  = {
 };
 export type ServiceVideo = { id: string; platform: "tiktok" | "instagram" | "youtube"; video_id: string; position: number };
 export type Service = { id: string; name: string; duration_min: number; price: number; photo_url?: string; description?: string; videos?: ServiceVideo[] };
-export type Booking = { service: Service; date: string; time: string; client_name: string; client_phone: string; client_email?: string };
+/**
+ * Lieu du rdv, résolu côté serveur pour la date choisie (exception du jour →
+ * planning récurrent → adresse du profil). `id` NULL = presta mono-adresse.
+ */
+export type BookingLocation = { id: string | null; label: string | null; address: string };
+export type Booking = { service: Service; date: string; time: string; client_name: string; client_phone: string; client_email?: string; location?: BookingLocation | null };
 
 const STEPS = ["Prestation", "Créneau", "Vos coordonnées", "Confirmation"];
 
@@ -86,7 +91,7 @@ export default function BookingFlow({ presta, services }: { presta: Presta; serv
             )}
 
             {step === 1 && <StepService services={services} selected={booking.service} onSelect={s => patch({ service: s })} />}
-            {step === 2 && <StepSlot presta={presta} service={booking.service!} selected={{ date: booking.date, time: booking.time }} onSelect={(date, time) => { patch({ date, time }); setStep(3); }} onBack={() => setStep(1)} />}
+            {step === 2 && <StepSlot presta={presta} service={booking.service!} selected={{ date: booking.date, time: booking.time }} onSelect={(date, time, location) => { patch({ date, time, location }); setStep(3); }} onBack={() => setStep(1)} />}
             {step === 3 && <StepContact booking={booking as Booking} onSubmit={data => { patch(data); setStep(4); }} onBack={() => setStep(2)} />}
             {step === 4 && <StepConfirm booking={booking as Booking} presta={presta} onRestart={() => { setBooking({}); setStep(1); }} />}
           </div>
