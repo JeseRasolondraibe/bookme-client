@@ -67,8 +67,22 @@ export default function PrivacyPageEN() {
 
       <Section title="4. Third-party services">
         <p>
-          The App uses Supabase for authentication, storage, and data management,
-          in compliance with applicable regulations.
+          The App relies on the following technical providers: Supabase
+          (authentication, database and storage), Vercel (hosting of the booking
+          page), Resend (confirmation and reminder emails), Expo (push
+          notifications) and Google (Sign in with Google, if you choose it).
+        </p>
+        <p>
+          AI assistant: the App offers professionals two features powered by
+          Claude, Anthropic&apos;s AI model. With &ldquo;Help me write&rdquo;,
+          the business name, address, services and the keywords entered are sent
+          to generate a suggested bio. With the scheduling assistant, the
+          professional&apos;s schedule, locations and upcoming appointments
+          (client name, date, time and service) are sent to understand their
+          request. Clients&apos; phone numbers and email addresses are never
+          sent. This only happens when the professional explicitly requests it,
+          after being informed and agreeing in the App. Anthropic does not use
+          data sent through its API to train its models.
         </p>
       </Section>
 
