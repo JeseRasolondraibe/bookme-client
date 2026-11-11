@@ -76,20 +76,6 @@ export default function PrivacyPage() {
           emails de confirmation et de rappel), Expo (notifications push) et
           Google (connexion avec un compte Google, si vous la choisissez).
         </p>
-        <p>
-          Assistant IA : l&apos;Application propose aux professionnels deux
-          fonctions s&apos;appuyant sur Claude, le modèle d&apos;IA
-          d&apos;Anthropic. Avec « M&apos;aider à rédiger », le nom du salon,
-          son adresse, ses prestations et les mots-clés saisis sont envoyés pour
-          générer une proposition de bio. Avec l&apos;assistant de planning, le
-          planning du professionnel, ses lieux et ses rendez-vous à venir (nom
-          des clientes, date, heure et prestation) sont envoyés pour comprendre
-          sa demande. Le téléphone et l&apos;email des clientes ne sont jamais
-          transmis. Ces envois n&apos;ont lieu qu&apos;à la demande explicite du
-          professionnel, après information et accord dans l&apos;Application.
-          Anthropic n&apos;utilise pas les données envoyées via son API pour
-          entraîner ses modèles.
-        </p>
       </Section>
 
       <Section title="5. Conservation des données">
