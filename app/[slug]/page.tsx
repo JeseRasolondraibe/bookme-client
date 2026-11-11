@@ -16,7 +16,31 @@ export default async function PrestaPage({ params }: { params: Promise<{ slug: s
     ? new Date(presta.trial_ends_at) > new Date()
     : false;
 
-  if (!presta || (!presta.is_active && !inTrial)) notFound();
+  if (!presta) notFound();
+
+  // Abonnement non réglé : plutôt qu'une 404 (la cliente croirait que la
+  // presta a disparu), on explique que la réservation en ligne est suspendue
+  // et on donne le moyen de la joindre directement.
+  if (!presta.is_active && !inTrial) {
+    return (
+      <main className="flex-1 bg-stone-50 flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md bg-white border border-stone-200 rounded-2xl p-8 text-center shadow-sm">
+          <h1 className="text-xl font-semibold text-stone-900">{presta.name}</h1>
+          <p className="text-sm text-stone-600 mt-3">
+            La réservation en ligne est momentanément indisponible.
+          </p>
+          {presta.phone ? (
+            <a href={`tel:${presta.phone}`}
+              className="mt-6 inline-block w-full bg-accent-600 hover:bg-accent-700 text-white font-medium py-3.5 rounded-xl">
+              Appeler {presta.phone}
+            </a>
+          ) : (
+            <p className="text-sm text-stone-500 mt-4">Contacte directement ta prestataire pour prendre rendez-vous.</p>
+          )}
+        </div>
+      </main>
+    );
+  }
 
   const { data: services } = await supabase
     .from("services")
