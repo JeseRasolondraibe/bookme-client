@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Booking } from "../BookingFlow";
+import Turnstile, { TURNSTILE_SITE_KEY } from "../Turnstile";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://flrtdhzcimbkbcgczmea.supabase.co";
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -19,12 +20,15 @@ export default function StepContact({ booking, onSubmit, onBack }: {
   const [email,   setEmail]   = useState("");
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState("");
+  const [captcha, setCaptcha] = useState("");
+  const [captchaReset, setCaptchaReset] = useState(0);
   // Format volontairement permissif (pas de RFC 5322 complet) : on veut juste
   // écarter les fautes de frappe grossières, pas rejeter des adresses
   // valides mais inhabituelles. L'email est obligatoire depuis que c'est le
   // seul canal de confirmation/rappel (le SMS a été retiré).
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-  const valid = name.trim().length > 1 && phone.trim().length >= 8 && emailValid;
+  const valid = name.trim().length > 1 && phone.trim().length >= 8 && emailValid
+    && (!TURNSTILE_SITE_KEY || !!captcha);
 
   async function handleSubmit() {
     if (!valid) return;
@@ -41,6 +45,7 @@ export default function StepContact({ booking, onSubmit, onBack }: {
         body: JSON.stringify({
           slug, service_id: booking.service.id, date: booking.date, time: booking.time,
           client_name: name.trim(), client_phone: phone.trim(), client_email: email.trim(),
+          turnstile_token: captcha || undefined,
         }),
       });
       const data = await res.json();
@@ -48,6 +53,7 @@ export default function StepContact({ booking, onSubmit, onBack }: {
       onSubmit({ client_name: name, client_phone: phone, client_email: email });
     } catch (e: any) {
       setError(e.message);
+      setCaptchaReset(n => n + 1);
     } finally {
       setLoading(false);
     }
@@ -88,6 +94,7 @@ export default function StepContact({ booking, onSubmit, onBack }: {
           <p className="text-xs text-stone-400 mt-1.5">Pour la confirmation et le rappel de votre rendez-vous.</p>
         </div>
       </div>
+      <Turnstile onToken={setCaptcha} resetKey={captchaReset} />
       {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
       <button onClick={handleSubmit} disabled={!valid || loading}
         className="mt-6 w-full bg-accent-600 hover:bg-accent-700 disabled:bg-stone-200 disabled:text-stone-400 text-white font-medium py-3.5 rounded-xl shadow-sm transition-all active:scale-[0.98]">
