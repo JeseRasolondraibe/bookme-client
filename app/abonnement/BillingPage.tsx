@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase-browser";
 // (règle App Store 3.1.3(f)).
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://flrtdhzcimbkbcgczmea.supabase.co";
-const PRICE_LABEL  = "9,99 € / mois";
+const PRICE_LABEL  = "13,99 € / mois";
 
 type PrestaInfo = { name: string | null; slug: string; is_active: boolean; trial_ends_at: string | null };
 
@@ -95,7 +95,7 @@ export default function BillingPage() {
   return (
     <main className="flex-1 bg-stone-50 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md bg-white border border-stone-200 rounded-2xl p-6 sm:p-8 shadow-sm">
-        <p className="text-2xl font-bold text-accent-600 text-center">BookMe</p>
+        <p className="text-2xl font-bold text-accent-600 text-center">Book Me Again</p>
         <h1 className="text-lg font-semibold text-stone-900 text-center mt-1 mb-6">Mon abonnement</h1>
 
         {!ready ? (
@@ -103,12 +103,12 @@ export default function BillingPage() {
         ) : !session ? (
           step === "email" ? (
             <div className="flex flex-col gap-4">
-              <p className="text-sm text-stone-600 text-center">Connecte-toi avec l&apos;email de ton compte BookMe : on t&apos;envoie un code.</p>
+              <p className="text-sm text-stone-600 text-center">Connecte-toi avec l&apos;email de ton compte Book Me Again : on t&apos;envoie un code.</p>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="ton@email.com" className={input} autoFocus />
               <button onClick={sendCode} disabled={busy || !email.includes("@")} className={primary}>
                 {busy ? "Envoi…" : "Recevoir un code"}
               </button>
-              <p className="text-xs text-stone-400 text-center">Tu n&apos;as pas encore de compte ? Crée-le depuis l&apos;app BookMe.</p>
+              <p className="text-xs text-stone-400 text-center">Tu n&apos;as pas encore de compte ? Crée-le depuis l&apos;app Book Me Again.</p>
             </div>
           ) : (
             <div className="flex flex-col gap-4">
@@ -123,7 +123,7 @@ export default function BillingPage() {
             </div>
           )
         ) : !presta ? (
-          <p className="text-sm text-stone-500 text-center">Aucun profil BookMe n&apos;est associé à ce compte. Termine ton inscription dans l&apos;app.</p>
+          <p className="text-sm text-stone-500 text-center">Aucun profil Book Me Again n&apos;est associé à ce compte. Termine ton inscription dans l&apos;app.</p>
         ) : (
           <div className="flex flex-col gap-4">
             {justPaid && (
