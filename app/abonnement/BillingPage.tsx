@@ -70,7 +70,10 @@ export default function BillingPage() {
     if (!session) return;
     setBusy(true); setError("");
     try {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/${fn}`, {
+      // En preview de test, NEXT_PUBLIC_BILLING_SUFFIX="-test" envoie vers les
+      // fonctions Stripe de test (billing-checkout-test, billing-portal-test).
+      const suffix = process.env.NEXT_PUBLIC_BILLING_SUFFIX ?? "";
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/${fn}${suffix}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
