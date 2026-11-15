@@ -2,6 +2,7 @@
 import { Service } from "../BookingFlow";
 import { ClockIcon, TagIcon } from "../icons";
 import { formatDuration } from "@/lib/duration";
+import { formatPrice } from "@/lib/price";
 
 // La sélection ne fait plus avancer le flow toute seule : le client valide via
 // le bouton « Continuer » du récapitulatif, ce qui lui laisse le temps de comparer.
@@ -45,7 +46,7 @@ export default function StepService({ services, selected, onSelect }: {
                     </span>
                     <span className="flex items-center gap-1.5 text-xs text-stone-500">
                       <TagIcon className="w-3.5 h-3.5 text-stone-400" />
-                      {s.price} €
+                      {formatPrice(s.price)}
                     </span>
                   </div>
                 </div>

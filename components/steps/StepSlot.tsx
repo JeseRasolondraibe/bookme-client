@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { BookingLocation, Presta, Service } from "../BookingFlow";
 import { resolveHorizonDate, formatHorizonLabel } from "@/lib/horizon";
+import { formatPrice } from "@/lib/price";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://flrtdhzcimbkbcgczmea.supabase.co";
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -167,7 +168,7 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
       <div className="flex items-center gap-2 mb-4">
         <button onClick={onBack} className="text-stone-400 hover:text-stone-700 text-sm">← Retour</button>
         <span className="ml-auto text-xs bg-accent-50 text-accent-600 px-2 py-1 rounded-lg font-medium">
-          {service.name} · {service.price} €
+          {service.name} · {formatPrice(service.price)}
         </span>
       </div>
 

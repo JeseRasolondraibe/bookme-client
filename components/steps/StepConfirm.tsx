@@ -1,5 +1,6 @@
 "use client";
 import { Booking, Presta } from "../BookingFlow";
+import { formatPrice } from "@/lib/price";
 
 function formatDate(d: string) {
   return new Date(d + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
@@ -49,7 +50,7 @@ export default function StepConfirm({ booking, presta, onRestart }: {
           </div>
         )}
         <div className="flex justify-between text-sm py-1.5">
-          <span className="text-stone-500">Prix</span><span className="font-semibold text-stone-900">{booking.service.price} €</span>
+          <span className="text-stone-500">Prix</span><span className="font-semibold text-stone-900">{formatPrice(booking.service.price)}</span>
         </div>
       </div>
       <div className="flex flex-col gap-3">

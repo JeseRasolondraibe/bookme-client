@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Booking } from "../BookingFlow";
 import Turnstile, { TURNSTILE_SITE_KEY } from "../Turnstile";
+import { formatPrice } from "@/lib/price";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://flrtdhzcimbkbcgczmea.supabase.co";
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -73,7 +74,7 @@ export default function StepContact({ booking, onSubmit, onBack }: {
           <span className="text-stone-500">Heure</span><span className="font-medium text-stone-900">{booking.time}</span>
         </div>
         <div className="flex justify-between text-sm py-1.5">
-          <span className="text-stone-500">Prix</span><span className="font-semibold text-stone-900">{booking.service.price} €</span>
+          <span className="text-stone-500">Prix</span><span className="font-semibold text-stone-900">{formatPrice(booking.service.price)}</span>
         </div>
       </div>
       <div className="flex flex-col gap-4">

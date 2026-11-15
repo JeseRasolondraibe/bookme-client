@@ -2,6 +2,7 @@
 import { Booking } from "./BookingFlow";
 import { ClockIcon, TagIcon, CalendarIcon, LockIcon } from "./icons";
 import { formatDuration } from "@/lib/duration";
+import { formatPrice } from "@/lib/price";
 
 function formatDate(iso: string) {
   return new Date(`${iso}T00:00:00`).toLocaleDateString("fr-FR", {
@@ -33,7 +34,7 @@ export default function BookingSummary({ booking, step, onContinue }: {
           </p>
           <p className="flex items-center gap-2 text-sm text-stone-500">
             <TagIcon className="w-3.5 h-3.5 text-stone-400" />
-            {service.price} €
+            {formatPrice(service.price)}
           </p>
           {date && time && (
             <p className="flex items-center gap-2 text-sm text-stone-500 first-letter:uppercase">
