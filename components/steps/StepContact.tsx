@@ -19,6 +19,7 @@ export default function StepContact({ booking, onSubmit, onBack }: {
   const [name,    setName]    = useState("");
   const [phone,   setPhone]   = useState("");
   const [email,   setEmail]   = useState("");
+  const [emailTouched, setEmailTouched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState("");
   const [captcha, setCaptcha] = useState("");
@@ -90,9 +91,13 @@ export default function StepContact({ booking, onSubmit, onBack }: {
         </div>
         <div>
           <label className="text-xs font-medium text-stone-500 mb-1.5 block">Email <span className="text-accent-600">*</span></label>
-          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="camille@mail.com"
+          <input type="email" value={email} onChange={e => setEmail(e.target.value)} onBlur={() => setEmailTouched(true)} placeholder="camille@mail.com"
+            aria-invalid={emailTouched && !!email.trim() && !emailValid}
             className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-900 placeholder:text-stone-300 focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-400 bg-white" />
-          <p className="text-xs text-stone-400 mt-1.5">Pour la confirmation et le rappel de votre rendez-vous.</p>
+          {/* WEB-09 : le bouton restait grisé sans explication. */}
+          {emailTouched && !!email.trim() && !emailValid
+            ? <p className="text-xs text-red-500 mt-1.5">Adresse email invalide (exemple : camille@mail.com).</p>
+            : <p className="text-xs text-stone-400 mt-1.5">Pour la confirmation et le rappel de votre rendez-vous.</p>}
         </div>
       </div>
       <Turnstile onToken={setCaptcha} resetKey={captchaReset} />

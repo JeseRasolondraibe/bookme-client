@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import StepService from "./steps/StepService";
 import StepSlot from "./steps/StepSlot";
 import StepContact from "./steps/StepContact";
@@ -61,6 +61,34 @@ export default function BookingFlow({ presta, services }: { presta: Presta; serv
 
   const patch = (data: Partial<Booking>) => setBooking(b => ({ ...b, ...data }));
 
+  // WEB-15 : chaque étape est une entrée d'historique, pour que le bouton
+  // retour du navigateur (et le geste retour sur iPhone) revienne à l'étape
+  // précédente au lieu de quitter la page en perdant la saisie. L'URL ne
+  // change pas : seul history.state porte l'étape.
+  useEffect(() => {
+    window.history.replaceState({ ...(window.history.state ?? {}), bookingStep: 1 }, "");
+    const onPop = (e: PopStateEvent) => {
+      const target = Number(e.state?.bookingStep ?? 1);
+      setStep(current => {
+        // Après confirmation, revenir en arrière ne doit pas rouvrir le
+        // formulaire d'un rdv déjà pris : on repart d'une réservation vierge.
+        if (current === 4) { setBooking({}); return 1; }
+        return target >= 1 && target <= 3 ? target : 1;
+      });
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  const goTo = (n: number) => {
+    setStep(n);
+    window.history.pushState({ ...(window.history.state ?? {}), bookingStep: n }, "");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  // Les boutons « Retour » internes passent par l'historique, pour rester
+  // cohérents avec le bouton du navigateur.
+  const goBack = () => window.history.back();
+
   return (
     <main className="min-h-screen bg-stone-50 py-6 px-3 sm:px-4 lg:px-6">
       <div className="w-full max-w-[1600px] mx-auto">
@@ -91,15 +119,15 @@ export default function BookingFlow({ presta, services }: { presta: Presta; serv
             )}
 
             {step === 1 && <StepService services={services} selected={booking.service} onSelect={s => patch({ service: s })} />}
-            {step === 2 && <StepSlot presta={presta} service={booking.service!} selected={{ date: booking.date, time: booking.time }} onSelect={(date, time, location) => { patch({ date, time, location }); setStep(3); }} onBack={() => setStep(1)} />}
-            {step === 3 && <StepContact booking={booking as Booking} onSubmit={data => { patch(data); setStep(4); }} onBack={() => setStep(2)} />}
-            {step === 4 && <StepConfirm booking={booking as Booking} presta={presta} onRestart={() => { setBooking({}); setStep(1); }} />}
+            {step === 2 && <StepSlot presta={presta} service={booking.service!} selected={{ date: booking.date, time: booking.time }} onSelect={(date, time, location) => { patch({ date, time, location }); goTo(3); }} onBack={goBack} />}
+            {step === 3 && <StepContact booking={booking as Booking} onSubmit={data => { patch(data); goTo(4); }} onBack={goBack} />}
+            {step === 4 && <StepConfirm booking={booking as Booking} presta={presta} onRestart={() => { setBooking({}); goTo(1); }} />}
           </div>
 
           {/* L'écran de confirmation se suffit à lui-même : le récap latéral ferait doublon. */}
           {step < 4 && (
             <div className="xl:col-start-3">
-              <BookingSummary booking={booking} step={step} onContinue={() => setStep(2)} />
+              <BookingSummary booking={booking} step={step} onContinue={() => goTo(2)} />
             </div>
           )}
 

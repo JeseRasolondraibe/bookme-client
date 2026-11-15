@@ -13,7 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BookMe – Réservation en ligne",
+  title: "Book Me Again – Réservation en ligne",
+  metadataBase: new URL("https://bookmeagain.com"),
   description: "Réservez votre rendez-vous en ligne, sans création de compte.",
 };
 

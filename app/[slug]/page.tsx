@@ -1,6 +1,32 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase-server";
 import BookingFlow from "@/components/BookingFlow";
+import type { Metadata } from "next";
+
+// PRO-07 : titre d'onglet et aperçu riche (WhatsApp, iMessage, Instagram)
+// quand la presta partage son lien.
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = await createClient();
+  const { data: presta } = await supabase
+    .from("prestas")
+    .select("name, bio, avatar_url")
+    .eq("slug", slug)
+    .single();
+  if (!presta) return { title: "Book Me Again" };
+
+  const title = `${presta.name} – Réservation en ligne`;
+  const bio = (presta.bio ?? "").replace(/\s+/g, " ").trim();
+  const description = bio ? (bio.length > 155 ? `${bio.slice(0, 152)}…` : bio) : `Réservez votre rendez-vous chez ${presta.name} en quelques clics.`;
+  const images = presta.avatar_url ? [{ url: presta.avatar_url }] : undefined;
+  return {
+    title,
+    description,
+    alternates: { canonical: `/${slug}` },
+    openGraph: { title, description, url: `/${slug}`, siteName: "Book Me Again", type: "website", locale: "fr_FR", images },
+    twitter: { card: images ? "summary_large_image" : "summary", title, description, images: images?.map(i => i.url) },
+  };
+}
 
 export default async function PrestaPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

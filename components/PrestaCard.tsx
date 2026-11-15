@@ -6,10 +6,27 @@ import { PhoneIcon, LocationIcon, InstagramIcon, TiktokIcon, GlobeIcon, LinkIcon
 // le haut et le bas de la page. Chaque ligne n'apparaît que si le champ
 // correspondant est renseigné — pas de placeholder grisé pour les champs vides.
 // Instagram/TikTok n'affichent que le pseudo (pas de lien de redirection).
+// PRO-05 : « bookmeagain.com » saisi sans https:// devenait un lien relatif
+// (bookmeagain.com/madavola/bookmeagain.com). On ajoute https:// et on écarte
+// tout ce qui n'est pas http(s) (javascript:, etc.).
+function toExternalUrl(raw?: string | null): string | null {
+  const v = (raw ?? "").trim();
+  if (!v) return null;
+  const withScheme = /^[a-z][a-z0-9+.-]*:/i.test(v) ? v : `https://${v.replace(/^\/+/, "")}`;
+  try {
+    const u = new URL(withScheme);
+    return u.protocol === "http:" || u.protocol === "https:" ? u.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function PrestaCard({ presta }: { presta: Presta }) {
+  const website   = toExternalUrl(presta.website);
+  const otherLink = toExternalUrl(presta.other_link);
   const links = [
-    presta.website    && { href: presta.website,    label: "Site web",  Icon: GlobeIcon },
-    presta.other_link && { href: presta.other_link, label: "Autre lien", Icon: LinkIcon },
+    website   && { href: website,   label: "Site web",  Icon: GlobeIcon },
+    otherLink && { href: otherLink, label: "Autre lien", Icon: LinkIcon },
   ].filter(Boolean) as { href: string; label: string; Icon: typeof GlobeIcon }[];
 
   return (

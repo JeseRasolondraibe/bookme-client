@@ -1,6 +1,6 @@
 export const metadata = {
-  title: "Politique de confidentialité – BookMe",
-  description: "Politique de confidentialité de l'application BookMe.",
+  title: "Politique de confidentialité – Book Me Again",
+  description: "Politique de confidentialité de l'application Book Me Again.",
 };
 
 export default function PrivacyPage() {
@@ -25,7 +25,7 @@ export default function PrivacyPage() {
 
       <p>
         La présente politique de confidentialité décrit comment l&apos;application{" "}
-        <strong>BookMe</strong> (« l&apos;Application »), éditée par{" "}
+        <strong>Book Me Again</strong> (« l&apos;Application »), éditée par{" "}
         <strong>Jese Rasolondraibe</strong>, traite vos informations lorsque vous
         utilisez nos services.
       </p>
