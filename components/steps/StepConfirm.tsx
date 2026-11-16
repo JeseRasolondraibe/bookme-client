@@ -13,10 +13,9 @@ export default function StepConfirm({ booking, presta, onRestart }: {
     const start = new Date(`${booking.date}T${booking.time}:00`);
     const end   = new Date(start.getTime() + booking.service.duration_min * 60000);
     const fmt   = (d: Date) => d.toISOString().replace(/[-:]/g,"").split(".")[0] + "Z";
-    // L'adresse du jour, pas celle du profil : pour un presta multi-adresses
-    // ce sont deux choses différentes.
-    const place = booking.location?.address ?? presta.address;
-    const locationParam = place ? `&location=${encodeURIComponent(place)}` : "";
+    // L'adresse n'est pas connue de la page publique (confidentialité) : la
+    // cliente la retrouve dans son email de confirmation.
+    const locationParam = "";
     window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(booking.service.name + " chez " + presta.name)}&dates=${fmt(start)}/${fmt(end)}${locationParam}`, "_blank");
   }
 
@@ -28,7 +27,7 @@ export default function StepConfirm({ booking, presta, onRestart }: {
         </svg>
       </div>
       <h2 className="text-xl font-semibold text-stone-900 mb-1">RDV confirmé !</h2>
-      <p className="text-sm text-stone-400 mb-8">Un SMS de confirmation vous a été envoyé au {booking.client_phone}</p>
+      <p className="text-sm text-stone-400 mb-8">Un email de confirmation, avec l&apos;adresse du rendez-vous, vous a été envoyé{booking.client_email ? ` à ${booking.client_email}` : ""}.</p>
       <div className="bg-white border border-stone-200 rounded-xl p-4 mb-6 text-left">
         <p className="text-sm font-semibold text-stone-900 mb-3">{presta.name}</p>
         <div className="flex justify-between text-sm py-1.5 border-b border-stone-100">
@@ -40,15 +39,15 @@ export default function StepConfirm({ booking, presta, onRestart }: {
         <div className="flex justify-between text-sm py-1.5 border-b border-stone-100">
           <span className="text-stone-500">Heure</span><span className="font-medium text-stone-900">{booking.time}</span>
         </div>
-        {booking.location && (
-          <div className="flex justify-between gap-4 text-sm py-1.5 border-b border-stone-100">
-            <span className="text-stone-500 shrink-0">Adresse</span>
-            <span className="font-medium text-stone-900 text-right">
-              {booking.location.label && <span className="block">{booking.location.label}</span>}
-              {booking.location.address}
-            </span>
-          </div>
-        )}
+        <div className="flex justify-between gap-4 text-sm py-1.5 border-b border-stone-100">
+          <span className="text-stone-500 shrink-0">Adresse</span>
+          <span className="font-medium text-stone-900 text-right">
+            {(booking.location?.label || booking.location?.city || presta.city) && (
+              <span className="block">{[booking.location?.label, booking.location?.city ?? presta.city].filter(Boolean).join(" · ")}</span>
+            )}
+            <span className="font-normal text-stone-500">Envoyée par email</span>
+          </span>
+        </div>
         <div className="flex justify-between text-sm py-1.5">
           <span className="text-stone-500">Prix</span><span className="font-semibold text-stone-900">{formatPrice(booking.service.price)}</span>
         </div>

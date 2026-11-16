@@ -34,7 +34,7 @@ export default async function PrestaPage({ params }: { params: Promise<{ slug: s
 
   const { data: presta } = await supabase
     .from("prestas")
-    .select("id, slug, name, bio, avatar_url, phone, address, instagram, tiktok, website, other_link, is_active, trial_ends_at, booking_horizon_months, booking_horizon_date")
+    .select("id, slug, name, bio, avatar_url, phone, city, instagram, tiktok, website, other_link, is_active, trial_ends_at, booking_horizon_months, booking_horizon_date")
     .eq("slug", slug)
     .single();
 

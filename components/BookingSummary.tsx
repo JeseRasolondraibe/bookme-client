@@ -42,7 +42,7 @@ export default function BookingSummary({ booking, step, onContinue }: {
               {formatDate(date)} à {time}
             </p>
           )}
-          {location && (
+          {(location?.label || location?.city) && (
             <p className="flex items-start gap-2 text-sm text-stone-500">
               <svg aria-hidden="true" className="mt-0.5 w-3.5 h-3.5 shrink-0 text-stone-400" viewBox="0 0 24 24"
                 fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -50,8 +50,7 @@ export default function BookingSummary({ booking, step, onContinue }: {
                 <circle cx="12" cy="10" r="3" />
               </svg>
               <span className="leading-snug">
-                {location.label && <span className="block font-medium text-stone-700">{location.label}</span>}
-                {location.address}
+                <span className="block font-medium text-stone-700">{[location.label, location.city].filter(Boolean).join(" · ")}</span>
               </span>
             </p>
           )}

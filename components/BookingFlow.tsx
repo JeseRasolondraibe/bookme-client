@@ -11,7 +11,8 @@ import { CheckIcon } from "./icons";
 
 export type Presta  = {
   id: string; slug: string; name: string; bio?: string; avatar_url?: string; phone?: string;
-  address?: string; instagram?: string; tiktok?: string; website?: string; other_link?: string;
+  // Pas d'adresse exacte côté public : seulement la ville ou le quartier choisi par la presta.
+  city?: string | null; instagram?: string; tiktok?: string; website?: string; other_link?: string;
   // Horizon de réservation, cf. lib/horizon.ts
   booking_horizon_months?: number | null; booking_horizon_date?: string | null;
 };
@@ -21,7 +22,9 @@ export type Service = { id: string; name: string; duration_min: number; price: n
  * Lieu du rdv, résolu côté serveur pour la date choisie (exception du jour →
  * planning récurrent → adresse du profil). `id` NULL = presta mono-adresse.
  */
-export type BookingLocation = { id: string | null; label: string | null; address: string };
+// Pas d'adresse côté page publique : elle n'est envoyée que dans l'email de
+// confirmation. Seuls le libellé du lieu et la ville publique sont connus ici.
+export type BookingLocation = { id: string | null; label: string | null; city?: string | null };
 export type Booking = { service: Service; date: string; time: string; client_name: string; client_phone: string; client_email?: string; location?: BookingLocation | null };
 
 const STEPS = ["Prestation", "Créneau", "Vos coordonnées", "Confirmation"];

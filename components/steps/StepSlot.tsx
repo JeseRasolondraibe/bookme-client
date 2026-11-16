@@ -258,7 +258,7 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
               {/* Le lieu est affiché AVANT les créneaux : pour un presta qui
                   tourne entre plusieurs adresses, c'est une information de
                   choix, pas un détail de confirmation. */}
-              {location && (
+              {(location?.label || location?.city) && (
                 <div className="flex items-start gap-2 rounded-xl bg-accent-50 px-3 py-2.5">
                   <svg aria-hidden="true" className="mt-0.5 w-4 h-4 shrink-0 text-accent-600" viewBox="0 0 24 24"
                     fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -266,8 +266,8 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
                     <circle cx="12" cy="10" r="3" />
                   </svg>
                   <p className="text-xs leading-snug text-stone-600">
-                    {location.label && <span className="font-semibold text-stone-900">{location.label}<br /></span>}
-                    {location.address}
+                    <span className="font-semibold text-stone-900">{[location.label, location.city].filter(Boolean).join(" · ")}</span>
+                    <br />L&apos;adresse exacte vous sera envoyée par email après la réservation.
                   </p>
                 </div>
               )}

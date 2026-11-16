@@ -43,7 +43,7 @@ export default function PrestaCard({ presta }: { presta: Presta }) {
         <h2 className="text-xl font-semibold text-stone-900">{presta.name}</h2>
         {presta.bio && <p className="text-sm text-stone-500 mt-2 leading-relaxed">{presta.bio}</p>}
 
-        {(presta.phone || presta.address || presta.instagram || presta.tiktok || links.length > 0) && (
+        {(presta.phone || presta.city || presta.instagram || presta.tiktok || links.length > 0) && (
           <div className="flex flex-col gap-3 mt-5 pt-5 border-t border-stone-100">
             {presta.phone && (
               <a href={`tel:${presta.phone}`} className="flex items-center gap-3 text-sm text-stone-700 hover:text-accent-600 transition-colors">
@@ -52,10 +52,10 @@ export default function PrestaCard({ presta }: { presta: Presta }) {
               </a>
             )}
 
-            {presta.address && (
+            {presta.city && (
               <div className="flex items-center gap-3 text-sm text-stone-700">
                 <LocationIcon className="text-stone-400" />
-                {presta.address}
+                {presta.city}
               </div>
             )}
 
