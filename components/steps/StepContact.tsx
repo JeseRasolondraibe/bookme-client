@@ -106,7 +106,7 @@ export default function StepContact({ booking, onSubmit, onBack }: {
         className="mt-6 w-full bg-accent-600 hover:bg-accent-700 disabled:bg-stone-200 disabled:text-stone-400 text-white font-medium py-3.5 rounded-xl shadow-sm transition-all active:scale-[0.98]">
         {loading ? "Réservation en cours..." : "Réserver →"}
       </button>
-      <p className="text-xs text-stone-400 text-center mt-3">Annulation gratuite jusqu'à 24h avant</p>
+      <p className="text-xs text-stone-400 text-center mt-3">Pour annuler, contactez votre prestataire</p>
     </section>
   );
 }
