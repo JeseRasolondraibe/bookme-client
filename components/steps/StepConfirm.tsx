@@ -26,9 +26,9 @@ export default function StepConfirm({ booking, presta, onRestart }: {
           <polyline points="20 6 9 17 4 12"/>
         </svg>
       </div>
-      <h2 className="text-xl font-semibold text-stone-900 mb-1">RDV confirmé !</h2>
+      <h2 className="font-head text-2xl font-semibold text-stone-900 mb-1">C&apos;est réservé !</h2>
       <p className="text-sm text-stone-400 mb-8">Un email de confirmation, avec l&apos;adresse du rendez-vous, vous a été envoyé{booking.client_email ? ` à ${booking.client_email}` : ""}.</p>
-      <div className="bg-white border border-stone-200 rounded-xl p-4 mb-6 text-left">
+      <div className="bg-surface border border-stone-200 rounded-xl p-4 mb-6 text-left">
         <p className="text-sm font-semibold text-stone-900 mb-3">{presta.name}</p>
         <div className="flex justify-between text-sm py-1.5 border-b border-stone-100">
           <span className="text-stone-500">Prestation</span><span className="font-medium text-stone-900">{booking.service.name}</span>
@@ -54,7 +54,7 @@ export default function StepConfirm({ booking, presta, onRestart }: {
       </div>
       <div className="flex flex-col gap-3">
         <button onClick={addToCalendar}
-          className="w-full border border-stone-200 bg-white hover:border-accent-400 text-stone-700 font-medium py-3 rounded-xl text-sm transition-all active:scale-[0.98]">
+          className="w-full border border-stone-200 bg-surface hover:border-accent-400 text-stone-700 font-medium py-3 rounded-xl text-sm transition-all active:scale-[0.98]">
           Ajouter à mon calendrier
         </button>
         <button onClick={onRestart} className="w-full text-stone-400 hover:text-stone-600 text-sm py-2 transition-colors">

@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, DM_Sans, Bricolage_Grotesque, Inter, Space_Grotesk, Fraunces, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// Polices des ambiances (cf. lib/themes.ts). Seule Plus Jakarta Sans,
+// l'ambiance par défaut, est préchargée ; les autres ne sont téléchargées
+// que si la page de la presta les utilise.
+const jakarta    = Plus_Jakarta_Sans({ variable: "--f-jakarta", subsets: ["latin"], weight: ["400", "500", "600", "700"] });
+const dmsans     = DM_Sans({ variable: "--f-dmsans", subsets: ["latin"], weight: ["400", "500", "600", "700"], preload: false });
+const bricolage  = Bricolage_Grotesque({ variable: "--f-bricolage", subsets: ["latin"], weight: ["600", "700"], preload: false });
+const inter      = Inter({ variable: "--f-inter", subsets: ["latin"], weight: ["400", "500", "600", "700"], preload: false });
+const space      = Space_Grotesk({ variable: "--f-space", subsets: ["latin"], weight: ["600", "700"], preload: false });
+const fraunces   = Fraunces({ variable: "--f-fraunces", subsets: ["latin"], weight: ["600", "700"], preload: false });
+const playfair   = Playfair_Display({ variable: "--f-playfair", subsets: ["latin"], weight: ["700"], preload: false });
 
 export const metadata: Metadata = {
   title: "Book Me Again – Réservation en ligne",
@@ -23,11 +24,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const fonts = [jakarta, dmsans, bricolage, inter, space, fraunces, playfair].map(f => f.variable).join(" ");
   return (
-    <html
-      lang="fr"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
+    <html lang="fr" className={`${fonts} h-full antialiased`}>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

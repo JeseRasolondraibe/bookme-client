@@ -54,7 +54,7 @@ function SlotButton({ slot, selected, onSelect }: { slot: string; selected: bool
       className={`py-2.5 text-sm rounded-xl border transition-all active:scale-[0.98]
         ${selected
           ? "border-accent-600 bg-accent-50 text-accent-600 font-medium ring-1 ring-accent-400"
-          : "border-stone-200 bg-white text-stone-700 hover:border-accent-400"}`}>
+          : "border-stone-200 bg-surface text-stone-700 hover:border-accent-400"}`}>
       {slot}
     </button>
   );
@@ -150,7 +150,7 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack, 
   // simple ligne (le calendrier perd ~30% de hauteur au passage).
   function getDayStyle(iso: string, isSel: boolean) {
     const status = statusOf(iso);
-    if (isSel) return "bg-accent-600 text-white font-semibold shadow-sm";
+    if (isSel) return "bg-accent-600 text-on-accent font-semibold shadow-sm";
     if (status === "loading") return "bg-stone-50 text-stone-300 animate-pulse";
     if (status === "available") return "bg-green-100 text-green-800 font-medium hover:bg-green-200 cursor-pointer";
     if (status === "full")      return "bg-orange-100 text-orange-700 cursor-default";
@@ -186,7 +186,7 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack, 
       {/* Calendrier et créneaux côte à côte à partir de md : sur mobile la
           colonne unique reprend l'empilement d'origine. */}
       <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-start">
-        <div className="bg-white rounded-xl border border-stone-200 p-4">
+        <div className="bg-surface rounded-xl border border-stone-200 p-4">
           <div className="flex items-center justify-between mb-3">
             <button onClick={prevMonth} disabled={!canPrev} aria-label="Mois précédent"
               className="px-1 text-lg text-stone-400 enabled:hover:text-stone-700 disabled:text-stone-200 disabled:cursor-default">‹</button>
@@ -258,7 +258,7 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack, 
         {/* Colonne créneaux. Sur mobile elle n'apparaît qu'une fois une date
             choisie ; sur desktop elle garde sa place avec un message d'invite,
             pour que le calendrier ne se déplace pas au moment du clic. */}
-        <div className={`${date ? "block" : "hidden md:block"} bg-white rounded-xl border border-stone-200 p-4 md:max-h-[420px] md:overflow-y-auto`}>
+        <div className={`${date ? "block" : "hidden md:block"} bg-surface rounded-xl border border-stone-200 p-4 md:max-h-[420px] md:overflow-y-auto`}>
           {!date && (
             <p className="text-sm text-stone-400 text-center py-10">
               Choisis une date pour voir les créneaux disponibles.
@@ -310,7 +310,7 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack, 
 
       {date && time && (
         <button onClick={() => onSelect(date, time, location)}
-          className="mt-6 w-full bg-accent-600 hover:bg-accent-700 text-white font-medium py-3.5 rounded-xl shadow-sm transition-all active:scale-[0.98]">
+          className="mt-6 w-full bg-accent-600 hover:bg-accent-700 text-on-accent font-medium py-3.5 rounded-xl shadow-sm transition-all active:scale-[0.98]">
           Confirmer ce créneau →
         </button>
       )}

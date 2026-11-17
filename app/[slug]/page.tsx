@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase-server";
 import BookingFlow from "@/components/BookingFlow";
 import type { Metadata } from "next";
+import { themeOf, themeStyle } from "@/lib/themes";
 
 // PRO-07 : titre d'onglet et aperçu riche (WhatsApp, iMessage, Instagram)
 // quand la presta partage son lien.
@@ -34,7 +35,7 @@ export default async function PrestaPage({ params }: { params: Promise<{ slug: s
 
   const { data: presta } = await supabase
     .from("prestas")
-    .select("id, slug, name, bio, avatar_url, phone, city, instagram, tiktok, website, other_link, is_active, trial_ends_at, booking_horizon_months, booking_horizon_date")
+    .select("id, slug, name, bio, avatar_url, phone, city, instagram, tiktok, website, other_link, is_active, trial_ends_at, booking_horizon_months, booking_horizon_date, theme")
     .eq("slug", slug)
     .single();
 
@@ -49,15 +50,15 @@ export default async function PrestaPage({ params }: { params: Promise<{ slug: s
   // et on donne le moyen de la joindre directement.
   if (!presta.is_active && !inTrial) {
     return (
-      <main className="flex-1 bg-stone-50 flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md bg-white border border-stone-200 rounded-2xl p-8 text-center shadow-sm">
-          <h1 className="text-xl font-semibold text-stone-900">{presta.name}</h1>
+      <main style={themeStyle(themeOf(presta.theme))} className="flex-1 bg-stone-50 flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md bg-surface border border-stone-200 rounded-2xl p-8 text-center shadow-sm">
+          <h1 className="font-head text-xl font-semibold text-stone-900">{presta.name}</h1>
           <p className="text-sm text-stone-600 mt-3">
             La réservation en ligne est momentanément indisponible.
           </p>
           {presta.phone ? (
             <a href={`tel:${presta.phone}`}
-              className="mt-6 inline-block w-full bg-accent-600 hover:bg-accent-700 text-white font-medium py-3.5 rounded-xl">
+              className="mt-6 inline-block w-full bg-accent-600 hover:bg-accent-700 text-on-accent font-medium py-3.5 rounded-xl">
               Appeler {presta.phone}
             </a>
           ) : (

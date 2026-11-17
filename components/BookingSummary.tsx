@@ -1,6 +1,6 @@
 "use client";
 import { Booking } from "./BookingFlow";
-import { ClockIcon, TagIcon, CalendarIcon, LockIcon } from "./icons";
+import { ClockIcon, TagIcon, CalendarIcon } from "./icons";
 import { formatDuration } from "@/lib/duration";
 import { formatPrice } from "@/lib/price";
 
@@ -23,7 +23,7 @@ export default function BookingSummary({ booking, step, onContinue }: {
 
   return (
     <div className="flex flex-col gap-4 lg:sticky lg:top-6">
-      <div className="bg-white rounded-2xl border border-stone-200 p-5">
+      <div className="bg-surface rounded-2xl border border-stone-200 p-5">
         <p className="text-xs font-medium text-stone-400 uppercase tracking-wide mb-3">Votre réservation</p>
         <p className="text-sm font-semibold text-stone-900">{service.name}</p>
 
@@ -58,25 +58,21 @@ export default function BookingSummary({ booking, step, onContinue }: {
 
         {step === 1 && (
           <button onClick={onContinue}
-            className="mt-5 w-full flex items-center justify-center gap-2 bg-accent-600 hover:bg-accent-700 text-white font-medium py-3.5 rounded-xl shadow-sm transition-all active:scale-[0.98]">
-            Continuer
+            className="mt-5 w-full flex items-center justify-center gap-2 bg-accent-600 hover:bg-accent-700 text-on-accent font-medium py-3.5 rounded-xl shadow-sm transition-all active:scale-[0.98]">
+            Choisir un créneau
             <span aria-hidden="true">›</span>
           </button>
         )}
+        {/* Réassurance au plus près du bouton, là où la cliente hésite. */}
+        <ul className="mt-4 pt-4 border-t border-stone-100 flex flex-col gap-2">
+          {["Confirmation immédiate par email", "Sans création de compte", "Rappel la veille du rendez-vous"].map(t => (
+            <li key={t} className="flex items-center gap-2 text-xs text-stone-500">
+              <span aria-hidden="true" className="text-accent-600">✓</span>{t}
+            </li>
+          ))}
+        </ul>
       </div>
 
-      <div className="bg-white rounded-2xl border border-stone-200 p-5 flex flex-col gap-3">
-        {[
-          { icon: <CalendarIcon className="w-4 h-4 text-stone-400" />, text: "Réservation en ligne 24h/24 et 7j/7" },
-          { icon: <ClockIcon className="w-4 h-4 text-stone-400" />,    text: "Vous recevez une confirmation par email" },
-          { icon: <LockIcon className="w-4 h-4 text-stone-400" />,     text: "Vos données sont sécurisées" },
-        ].map(({ icon, text }) => (
-          <p key={text} className="flex items-start gap-3 text-sm text-stone-600 leading-snug">
-            <span className="mt-0.5">{icon}</span>
-            {text}
-          </p>
-        ))}
-      </div>
     </div>
   );
 }

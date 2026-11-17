@@ -1,33 +1,43 @@
 @import "tailwindcss";
 
+/* Ambiance par défaut (Épuré). La page de réservation la remplace par celle
+   de la presta via les variables --t-* posées sur son conteneur
+   (lib/themes.ts) : toute la palette stone/accent ci-dessous les suit. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --t-bg: #F5F5F8; --t-surface: #FFFFFF; --t-surface2: #ECECF2; --t-border: #E6E6EC;
+  --t-text: #111114; --t-muted: #5E5F6E;
+  --t-accent: #3B3BD6; --t-on-accent: #FFFFFF; --t-accent-soft: #EDEDFD;
+  --t-font-body: var(--f-jakarta); --t-font-head: var(--f-jakarta);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--t-bg);
+  --color-foreground: var(--t-text);
+  --font-sans: var(--t-font-body);
+  --font-head: var(--t-font-head);
 
-  /* Accent — aligned with the iOS app's brand purple (#534AB7) */
-  --color-accent-50: #EEEDFE;
-  --color-accent-400: #AFA9EC;
-  --color-accent-500: #7F77DD;
-  --color-accent-600: #534AB7;
-  --color-accent-700: #463F9C;
-}
+  --color-surface: var(--t-surface);
+  --color-on-accent: var(--t-on-accent);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-stone-50:  var(--t-bg);
+  --color-stone-100: var(--t-surface2);
+  --color-stone-200: var(--t-border);
+  --color-stone-300: color-mix(in srgb, var(--t-muted) 55%, var(--t-surface));
+  --color-stone-400: var(--t-muted);
+  --color-stone-500: var(--t-muted);
+  --color-stone-600: color-mix(in srgb, var(--t-text) 45%, var(--t-muted));
+  --color-stone-700: color-mix(in srgb, var(--t-text) 80%, var(--t-muted));
+  --color-stone-900: var(--t-text);
+
+  --color-accent-50:  var(--t-accent-soft);
+  --color-accent-400: color-mix(in srgb, var(--t-accent) 55%, var(--t-surface));
+  --color-accent-500: color-mix(in srgb, var(--t-accent) 80%, var(--t-surface));
+  --color-accent-600: var(--t-accent);
+  --color-accent-700: color-mix(in srgb, var(--t-accent) 85%, var(--t-text));
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--t-bg);
+  color: var(--t-text);
+  font-family: var(--t-font-body), system-ui, sans-serif;
 }

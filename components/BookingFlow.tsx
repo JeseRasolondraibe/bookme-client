@@ -7,7 +7,8 @@ import StepConfirm from "./steps/StepConfirm";
 import PrestaCard from "./PrestaCard";
 import BookingSummary from "./BookingSummary";
 import PortfolioGallery from "./PortfolioGallery";
-import { CheckIcon } from "./icons";
+import { themeOf, themeStyle } from "@/lib/themes";
+import { formatPrice } from "@/lib/price";
 
 export type Presta  = {
   id: string; slug: string; name: string; bio?: string; avatar_url?: string; phone?: string;
@@ -15,6 +16,8 @@ export type Presta  = {
   city?: string | null; instagram?: string; tiktok?: string; website?: string; other_link?: string;
   // Horizon de réservation, cf. lib/horizon.ts
   booking_horizon_months?: number | null; booking_horizon_date?: string | null;
+  /** Ambiance choisie dans l'app (Profil › Apparence), cf. lib/themes.ts. */
+  theme?: string | null;
 };
 export type ServiceVideo = { id: string; platform: "tiktok" | "instagram" | "youtube"; video_id: string; position: number };
 export type Service = { id: string; name: string; duration_min: number; price: number; photo_url?: string; description?: string; videos?: ServiceVideo[] };
@@ -27,34 +30,19 @@ export type Service = { id: string; name: string; duration_min: number; price: n
 export type BookingLocation = { id: string | null; label: string | null; city?: string | null };
 export type Booking = { service: Service; date: string; time: string; client_name: string; client_phone: string; client_email?: string; location?: BookingLocation | null };
 
-const STEPS = ["Prestation", "Créneau", "Vos coordonnées", "Confirmation"];
+const STEPS = ["Prestation", "Créneau", "Coordonnées", "Confirmation"];
+// Titres d'étape au ton conversationnel (plus de « 1. Choisissez… »).
+const TITLES = ["Que souhaitez-vous réserver ?", "Quand souhaitez-vous venir ?", "À quel nom réserver ?"];
 
-function Stepper({ step }: { step: number }) {
+// Progression discrète : 3 segments fins (la confirmation n'en est pas une).
+function Progress({ step }: { step: number }) {
   return (
-    <ol className="flex items-start">
-      {STEPS.map((label, i) => {
-        const n    = i + 1;
-        const done = n < step;
-        const here = n === step;
-        return (
-          <li key={label} className="flex-1 flex flex-col items-center relative">
-            {i > 0 && (
-              <span aria-hidden="true"
-                className={`absolute top-4 right-1/2 w-full h-px ${done || here ? "bg-accent-400" : "bg-stone-200"}`} />
-            )}
-            <span className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-colors
-              ${done  ? "bg-accent-600 text-white"
-              : here  ? "bg-accent-600 text-white ring-4 ring-accent-50"
-                      : "bg-stone-100 text-stone-400"}`}>
-              {done ? <CheckIcon className="w-3.5 h-3.5" /> : n}
-            </span>
-            <span className={`mt-2 text-xs text-center px-1 hidden sm:block ${here ? "text-accent-600 font-semibold" : "text-stone-400"}`}>
-              {label}
-            </span>
-          </li>
-        );
-      })}
-    </ol>
+    <div aria-label={`Étape ${step} sur 3 : ${STEPS[step - 1]}`} className="flex gap-1.5">
+      {[1, 2, 3].map(n => (
+        <span key={n} aria-hidden="true"
+          className={`h-1 flex-1 rounded-full transition-colors ${n <= step ? "bg-accent-600" : "bg-stone-200"}`} />
+      ))}
+    </div>
   );
 }
 
@@ -94,7 +82,8 @@ export default function BookingFlow({ presta, services }: { presta: Presta; serv
   const goBack = () => window.history.back();
 
   return (
-    <main className="min-h-screen bg-stone-50 py-6 px-3 sm:px-4 lg:px-6">
+    <main style={themeStyle(themeOf(presta.theme))}
+      className={`min-h-screen bg-stone-50 pt-6 px-3 sm:px-4 lg:px-6 ${step === 1 && booking.service ? "pb-28 lg:pb-6" : "pb-6"}`}>
       <div className="w-full max-w-[1600px] mx-auto">
         {/*
           4 items à plat dans la grille (pas de wrapper imbriqué) pour pouvoir
@@ -112,14 +101,12 @@ export default function BookingFlow({ presta, services }: { presta: Presta; serv
             <PrestaCard presta={presta} />
           </div>
 
-          <div className="bg-white rounded-2xl border border-stone-200 p-5 sm:p-7">
+          <div className="bg-surface rounded-2xl border border-stone-200 p-5 sm:p-7">
             {step < 4 && (
-              <nav aria-label="Étapes" className="mb-8 pb-7 border-b border-stone-100">
-                <Stepper step={step} />
-                <p className="sm:hidden text-center text-xs text-stone-400 mt-3">
-                  Étape {step} sur {STEPS.length} · <span className="text-accent-600 font-semibold">{STEPS[step - 1]}</span>
-                </p>
-              </nav>
+              <header className="mb-6">
+                <Progress step={step} />
+                <h2 className="font-head text-xl sm:text-2xl font-semibold text-stone-900 mt-5">{TITLES[step - 1]}</h2>
+              </header>
             )}
 
             {step === 1 && <StepService services={services} selected={booking.service} onSelect={s => patch({ service: s })} />}
@@ -131,7 +118,7 @@ export default function BookingFlow({ presta, services }: { presta: Presta; serv
 
           {/* L'écran de confirmation se suffit à lui-même : le récap latéral ferait doublon. */}
           {step < 4 && (
-            <div className="xl:col-start-3">
+            <div className={`xl:col-start-3 ${step === 1 ? "hidden lg:block" : ""}`}>
               <BookingSummary booking={booking} step={step} onContinue={() => goTo(2)} />
             </div>
           )}
@@ -139,7 +126,33 @@ export default function BookingFlow({ presta, services }: { presta: Presta; serv
           {/* Toujours visible : dès qu'un service a des vidéos, elles apparaissent ici. */}
           <PortfolioGallery services={services} />
         </div>
+
+        {/* Signature : chaque réservation fait connaître l'app à d'autres prestas. */}
+        <footer className="mt-10 pb-2 text-center text-xs text-stone-500">
+          Réservation en ligne avec <span className="font-semibold text-stone-700">Book Me Again</span>
+          <span aria-hidden="true"> · </span>
+          <a href="/" className="font-semibold text-accent-600 hover:text-accent-700 underline-offset-2 hover:underline">
+            Vous êtes prestataire ? Créez votre page
+          </a>
+        </footer>
       </div>
+
+      {/* Mobile : bouton toujours visible une fois la prestation choisie
+          (le récapitulatif et son bouton sont sous la liste, hors écran). */}
+      {step === 1 && booking.service && (
+        <div className="lg:hidden fixed inset-x-0 bottom-0 z-20 border-t border-stone-200 bg-surface/95 backdrop-blur px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]">
+          <div className="max-w-xl mx-auto flex items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-stone-900 truncate">{booking.service.name}</p>
+              <p className="text-xs text-stone-500">{formatPrice(booking.service.price)}</p>
+            </div>
+            <button type="button" onClick={() => goTo(2)}
+              className="shrink-0 bg-accent-600 hover:bg-accent-700 text-on-accent font-semibold text-sm px-5 py-3 rounded-xl shadow-sm active:scale-[0.98]">
+              Choisir un créneau
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

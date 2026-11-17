@@ -71,7 +71,7 @@ export default function StepContact({ booking, onSubmit, onBack, onSlotTaken }: 
   return (
     <section>
       <button onClick={onBack} className="text-stone-400 hover:text-stone-700 text-sm mb-4 block">← Retour</button>
-      <div className="bg-white border border-stone-200 rounded-xl p-4 mb-6">
+      <div className="bg-surface border border-stone-200 rounded-xl p-4 mb-6">
         <div className="flex justify-between text-sm py-1.5 border-b border-stone-100">
           <span className="text-stone-500">Prestation</span><span className="font-medium text-stone-900">{booking.service.name}</span>
         </div>
@@ -89,18 +89,18 @@ export default function StepContact({ booking, onSubmit, onBack, onSlotTaken }: 
         <div>
           <label className="text-xs font-medium text-stone-500 mb-1.5 block">Prénom et nom</label>
           <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Camille Laurent"
-            className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-900 placeholder:text-stone-300 focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-400 bg-white" />
+            className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-900 placeholder:text-stone-300 focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-400 bg-surface" />
         </div>
         <div>
           <label className="text-xs font-medium text-stone-500 mb-1.5 block">Téléphone <span className="text-accent-600">*</span></label>
           <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="06 12 34 56 78"
-            className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-900 placeholder:text-stone-300 focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-400 bg-white" />
+            className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-900 placeholder:text-stone-300 focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-400 bg-surface" />
         </div>
         <div>
           <label className="text-xs font-medium text-stone-500 mb-1.5 block">Email <span className="text-accent-600">*</span></label>
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} onBlur={() => setEmailTouched(true)} placeholder="camille@mail.com"
             aria-invalid={emailTouched && !!email.trim() && !emailValid}
-            className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-900 placeholder:text-stone-300 focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-400 bg-white" />
+            className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-900 placeholder:text-stone-300 focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-400 bg-surface" />
           {/* WEB-09 : le bouton restait grisé sans explication. */}
           {emailTouched && !!email.trim() && !emailValid
             ? <p className="text-xs text-red-500 mt-1.5">Adresse email invalide (exemple : camille@mail.com).</p>
@@ -110,10 +110,10 @@ export default function StepContact({ booking, onSubmit, onBack, onSlotTaken }: 
       <Turnstile onToken={setCaptcha} resetKey={captchaReset} />
       {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
       <button onClick={handleSubmit} disabled={!valid || loading}
-        className="mt-6 w-full bg-accent-600 hover:bg-accent-700 disabled:bg-stone-200 disabled:text-stone-400 text-white font-medium py-3.5 rounded-xl shadow-sm transition-all active:scale-[0.98]">
+        className="mt-6 w-full bg-accent-600 hover:bg-accent-700 disabled:bg-stone-200 disabled:text-stone-400 text-on-accent font-medium py-3.5 rounded-xl shadow-sm transition-all active:scale-[0.98]">
         {loading ? "Réservation en cours..." : "Réserver →"}
       </button>
-      <p className="text-xs text-stone-400 text-center mt-3">Pour annuler, contactez votre prestataire</p>
+      <p className="text-xs text-stone-500 text-center mt-3">Confirmation immédiate par email · Sans création de compte<br />Pour annuler, contactez votre prestataire</p>
     </section>
   );
 }
