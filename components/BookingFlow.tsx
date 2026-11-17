@@ -20,7 +20,13 @@ export type Presta  = {
   theme?: string | null;
 };
 export type ServiceVideo = { id: string; platform: "tiktok" | "instagram" | "youtube"; video_id: string; position: number };
-export type Service = { id: string; name: string; duration_min: number; price: number; photo_url?: string; description?: string; videos?: ServiceVideo[] };
+/** Supplément facultatif : n'ajoute pas de temps, seulement un prix (0 € possible). */
+export type ServiceOption = { id: string; name: string; price: number; position: number };
+export type Service = { id: string; name: string; duration_min: number; price: number; photo_url?: string; description?: string; videos?: ServiceVideo[]; options?: ServiceOption[] };
+/** Prix total affiché à la cliente (le serveur le recalcule de son côté). */
+export function totalPrice(service: Service, options: ServiceOption[] = []): number {
+  return Math.round((Number(service.price) + options.reduce((t, o) => t + Number(o.price), 0)) * 100) / 100;
+}
 /**
  * Lieu du rdv, résolu côté serveur pour la date choisie (exception du jour →
  * planning récurrent → adresse du profil). `id` NULL = presta mono-adresse.
@@ -28,7 +34,7 @@ export type Service = { id: string; name: string; duration_min: number; price: n
 // Pas d'adresse côté page publique : elle n'est envoyée que dans l'email de
 // confirmation. Seuls le libellé du lieu et la ville publique sont connus ici.
 export type BookingLocation = { id: string | null; label: string | null; city?: string | null };
-export type Booking = { service: Service; date: string; time: string; client_name: string; client_phone: string; client_email?: string; location?: BookingLocation | null };
+export type Booking = { service: Service; options?: ServiceOption[]; date: string; time: string; client_name: string; client_phone: string; client_email?: string; location?: BookingLocation | null };
 
 const STEPS = ["Prestation", "Créneau", "Coordonnées", "Confirmation"];
 // Titres d'étape au ton conversationnel (plus de « 1. Choisissez… »).
@@ -113,7 +119,9 @@ export default function BookingFlow({ presta, services }: { presta: Presta; serv
               </header>
             )}
 
-            {step === 1 && <StepService services={services} selected={booking.service} onSelect={s => patch({ service: s })} />}
+            {step === 1 && <StepService services={services} selected={booking.service} selectedOptions={booking.options ?? []}
+              onSelect={s => patch(booking.service?.id === s.id ? { service: s } : { service: s, options: [] })}
+              onOptionsChange={options => patch({ options })} />}
             {step === 2 && <StepSlot presta={presta} service={booking.service!} selected={{ date: booking.date, time: booking.time }} onSelect={(date, time, location) => { setSlotNotice(null); patch({ date, time, location }); goTo(3); }} onBack={goBack} notice={slotNotice} />}
             {step === 3 && <StepContact booking={booking as Booking} onSubmit={data => { patch(data); goTo(4); }} onBack={goBack}
               onSlotTaken={(msg, typed) => { setSlotNotice(msg); patch({ ...typed, time: undefined }); goBack(); }} />}
@@ -148,7 +156,7 @@ export default function BookingFlow({ presta, services }: { presta: Presta; serv
           <div className="max-w-xl mx-auto flex items-center gap-3">
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-stone-900 truncate">{booking.service.name}</p>
-              <p className="text-xs text-stone-500">{formatPrice(booking.service.price)}</p>
+              <p className="text-xs text-stone-500">{formatPrice(totalPrice(booking.service, booking.options))}</p>
             </div>
             <button type="button" onClick={() => goTo(2)}
               className="shrink-0 bg-accent-600 hover:bg-accent-700 text-on-accent font-semibold text-sm px-5 py-3 rounded-xl shadow-sm active:scale-[0.98]">
