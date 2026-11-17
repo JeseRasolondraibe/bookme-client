@@ -35,7 +35,7 @@ export default async function PrestaPage({ params }: { params: Promise<{ slug: s
 
   const { data: presta } = await supabase
     .from("prestas")
-    .select("id, slug, name, bio, avatar_url, phone, city, instagram, tiktok, website, other_link, is_active, trial_ends_at, booking_horizon_months, booking_horizon_date, theme")
+    .select("id, slug, name, bio, avatar_url, phone, city, instagram, tiktok, website, other_link, is_active, trial_ends_at, booking_horizon_months, booking_horizon_date, theme, deposits_enabled, stripe_charges_enabled, cancel_refund_hours")
     .eq("slug", slug)
     .single();
 
@@ -71,7 +71,7 @@ export default async function PrestaPage({ params }: { params: Promise<{ slug: s
 
   const { data: services } = await supabase
     .from("services")
-    .select("id, name, duration_min, price, photo_url, description, service_videos(id, platform, video_id, position), service_options(id, name, price, position, is_active)")
+    .select("id, name, duration_min, price, photo_url, description, deposit_type, deposit_value, service_videos(id, platform, video_id, position), service_options(id, name, price, position, is_active)")
     .eq("presta_id", presta.id)
     .eq("is_active", true)
     .order("price")

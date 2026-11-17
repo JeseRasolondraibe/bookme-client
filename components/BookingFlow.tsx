@@ -18,11 +18,15 @@ export type Presta  = {
   booking_horizon_months?: number | null; booking_horizon_date?: string | null;
   /** Ambiance choisie dans l'app (Profil › Apparence), cf. lib/themes.ts. */
   theme?: string | null;
+  /** Acomptes : actifs seulement si les deux sont vrais. */
+  deposits_enabled?: boolean | null; stripe_charges_enabled?: boolean | null;
+  /** Acompte remboursé si l'annulation a lieu au moins N heures avant. */
+  cancel_refund_hours?: number | null;
 };
 export type ServiceVideo = { id: string; platform: "tiktok" | "instagram" | "youtube"; video_id: string; position: number };
 /** Supplément facultatif : n'ajoute pas de temps, seulement un prix (0 € possible). */
 export type ServiceOption = { id: string; name: string; price: number; position: number };
-export type Service = { id: string; name: string; duration_min: number; price: number; photo_url?: string; description?: string; videos?: ServiceVideo[]; options?: ServiceOption[] };
+export type Service = { id: string; name: string; duration_min: number; price: number; photo_url?: string; description?: string; videos?: ServiceVideo[]; options?: ServiceOption[]; deposit_type?: string | null; deposit_value?: number | null };
 /** Prix total affiché à la cliente (le serveur le recalcule de son côté). */
 export function totalPrice(service: Service, options: ServiceOption[] = []): number {
   return Math.round((Number(service.price) + options.reduce((t, o) => t + Number(o.price), 0)) * 100) / 100;
@@ -58,6 +62,15 @@ export default function BookingFlow({ presta, services }: { presta: Presta; serv
   const [booking, setBooking] = useState<Partial<Booking>>({});
 
   const patch = (data: Partial<Booking>) => setBooking(b => ({ ...b, ...data }));
+  // Retour depuis Stripe sans payer : le créneau sera libéré (cf. deposits-sweep).
+  const [paymentCancelled, setPaymentCancelled] = useState(false);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("paiement") === "annule") {
+      setPaymentCancelled(true);
+      window.history.replaceState(window.history.state, "", window.location.pathname);
+    }
+  }, []);
 
   // WEB-15 : chaque étape est une entrée d'historique, pour que le bouton
   // retour du navigateur (et le geste retour sur iPhone) revienne à l'étape
@@ -112,6 +125,11 @@ export default function BookingFlow({ presta, services }: { presta: Presta; serv
           </div>
 
           <div className="bg-surface rounded-2xl border border-stone-200 p-5 sm:p-7">
+            {paymentCancelled && step === 1 && (
+              <p role="status" className="mb-5 text-sm bg-stone-100 text-stone-700 rounded-xl px-4 py-3">
+                Paiement de l&apos;acompte annulé : votre rendez-vous n&apos;est pas réservé. Vous pouvez choisir à nouveau un créneau.
+              </p>
+            )}
             {step < 4 && (
               <header className="mb-6">
                 <Progress step={step} />
@@ -123,7 +141,7 @@ export default function BookingFlow({ presta, services }: { presta: Presta; serv
               onSelect={s => patch(booking.service?.id === s.id ? { service: s } : { service: s, options: [] })}
               onOptionsChange={options => patch({ options })} />}
             {step === 2 && <StepSlot presta={presta} service={booking.service!} selected={{ date: booking.date, time: booking.time }} onSelect={(date, time, location) => { setSlotNotice(null); patch({ date, time, location }); goTo(3); }} onBack={goBack} notice={slotNotice} />}
-            {step === 3 && <StepContact booking={booking as Booking} onSubmit={data => { patch(data); goTo(4); }} onBack={goBack}
+            {step === 3 && <StepContact booking={booking as Booking} presta={presta} onSubmit={data => { patch(data); goTo(4); }} onBack={goBack}
               onSlotTaken={(msg, typed) => { setSlotNotice(msg); patch({ ...typed, time: undefined }); goBack(); }} />}
             {step === 4 && <StepConfirm booking={booking as Booking} presta={presta} onRestart={() => { setBooking({}); goTo(1); }} />}
           </div>
