@@ -62,6 +62,7 @@ export default function RdvPage({ token }: { token: string }) {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const lastCount = useRef(0);
 
@@ -143,72 +144,77 @@ export default function RdvPage({ token }: { token: string }) {
   const cancelled = booking.status === "cancelled";
   const prestaName = presta?.name ?? "Votre prestataire";
   const mapsHref = booking.location_address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(booking.location_address)}` : null;
+  const chatOn = messaging.enabled;
+
+  // Récap replié par défaut quand la messagerie est active : la page sert
+  // d'abord à échanger. Sans messagerie, le récap est tout le contenu.
+  const details = (
+    <div className="mt-3 pt-3 border-t border-stone-200 flex flex-col gap-2 text-sm">
+      <p className="text-stone-700">
+        {booking.service_name ?? "Rendez-vous"}{booking.duration_min ? ` · ${formatDuration(booking.duration_min)}` : ""}
+        {booking.price != null && <span className="text-stone-500"> · {formatPrice(booking.price)}</span>}
+      </p>
+      {booking.options && booking.options.length > 0 && (
+        <p className="text-stone-500">Options : {booking.options.map(o => o.name).join(", ")}</p>
+      )}
+      {booking.location_address && !cancelled && (
+        <p className="text-stone-700">
+          {booking.location_label && <span className="font-semibold text-stone-900">{booking.location_label} · </span>}
+          {booking.location_address}
+        </p>
+      )}
+      {!cancelled && (
+        <div className="flex flex-wrap gap-2 mt-1">
+          <a href={icsHref(data)} download="rendez-vous.ics" className="text-sm font-medium border border-stone-200 rounded-full px-3.5 py-2 text-stone-700 hover:bg-stone-50">Ajouter au calendrier</a>
+          {mapsHref && <a href={mapsHref} target="_blank" rel="noopener noreferrer" className="text-sm font-medium border border-stone-200 rounded-full px-3.5 py-2 text-stone-700 hover:bg-stone-50">Itinéraire</a>}
+          {presta?.phone && <a href={`tel:${presta.phone}`} className="inline-flex items-center gap-1.5 text-sm font-medium border border-stone-200 rounded-full px-3.5 py-2 text-stone-700 hover:bg-stone-50"><PhoneIcon className="w-4 h-4" />Appeler</a>}
+        </div>
+      )}
+      {cancelled && presta?.slug && (
+        <a href={`/${presta.slug}`} className="mt-1 block text-center bg-accent-600 hover:bg-accent-700 text-on-accent font-medium py-3 rounded-xl">Reprendre rendez-vous</a>
+      )}
+    </div>
+  );
 
   return (
     <>
       {fonts && <link rel="stylesheet" href={fonts} precedence="default" />}
-      <main style={themeStyle(theme)} className="flex-1 bg-stone-50 px-4 py-6 sm:py-10">
-        <div className="max-w-xl mx-auto flex flex-col gap-4">
-          <header className="flex items-center gap-3">
-            {presta?.avatar_url
-              ? <img src={presta.avatar_url} alt="" className="w-12 h-12 rounded-full object-cover bg-stone-200" />
-              : <div className="w-12 h-12 rounded-full bg-accent-50 text-accent-700 flex items-center justify-center font-head font-semibold text-lg" aria-hidden="true">{prestaName.charAt(0)}</div>}
-            <div className="min-w-0">
-              <p className="font-head text-xl font-semibold text-stone-900 truncate">{prestaName}</p>
-              {presta?.city && <p className="flex items-center gap-1 text-sm text-stone-500"><LocationIcon className="w-3.5 h-3.5" />{presta.city}</p>}
+      <main style={themeStyle(theme)} className={`bg-stone-50 ${chatOn ? "h-dvh flex flex-col" : "flex-1 px-4 py-6"}`}>
+        <div className={`w-full max-w-xl mx-auto ${chatOn ? "flex-1 min-h-0 flex flex-col" : ""}`}>
+
+          {/* En-tête compact : presta + rdv en une ligne, détails au toucher */}
+          <header className={`bg-surface border-stone-200 ${chatOn ? "border-b sm:border sm:rounded-2xl sm:mt-4 px-4 py-3" : "border rounded-2xl p-4"}`}>
+            <div className="flex items-center gap-3">
+              {presta?.avatar_url
+                ? <img src={presta.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover bg-stone-200 shrink-0" />
+                : <div className="w-10 h-10 rounded-full bg-accent-50 text-accent-700 flex items-center justify-center font-head font-semibold shrink-0" aria-hidden="true">{prestaName.charAt(0)}</div>}
+              <div className="min-w-0 flex-1">
+                <h1 className="font-head font-semibold text-stone-900 truncate">{prestaName}</h1>
+                <p className={`text-sm truncate ${cancelled ? "text-red-700" : "text-stone-600"}`}>
+                  {cancelled ? "Annulé · " : ""}<span className={cancelled ? "line-through" : ""}>{formatWhen(booking.booked_at)}</span>
+                </p>
+              </div>
+              {chatOn && (
+                <button type="button" onClick={() => setShowDetails(v => !v)} aria-expanded={showDetails}
+                  className="shrink-0 text-sm font-medium text-accent-700 px-2 py-2">
+                  {showDetails ? "Masquer" : "Détails"}
+                </button>
+              )}
             </div>
+            {(!chatOn || showDetails) && details}
           </header>
 
-          <section className="bg-surface border border-stone-200 rounded-2xl p-5" aria-labelledby="rdv-title">
-            <div className="flex items-center justify-between gap-3">
-              <span className={`text-xs font-semibold rounded-full px-2.5 py-1 ${cancelled ? "bg-red-50 text-red-700" : "bg-green-50 text-green-800"}`}>
-                {cancelled ? "Annulé" : "Confirmé"}
-              </span>
-              {booking.price != null && <span className="text-sm text-stone-600">{formatPrice(booking.price)}</span>}
-            </div>
-            <h1 id="rdv-title" className="font-head text-lg font-semibold text-stone-900 mt-3">
-              {booking.service_name ?? "Rendez-vous"}{booking.duration_min ? ` · ${formatDuration(booking.duration_min)}` : ""}
-            </h1>
-            <p className={`text-stone-700 mt-1 ${cancelled ? "line-through text-stone-400" : ""}`}>{formatWhen(booking.booked_at)}</p>
-            {booking.options && booking.options.length > 0 && (
-              <p className="text-sm text-stone-500 mt-1">Options : {booking.options.map(o => o.name).join(", ")}</p>
-            )}
-            {booking.location_address && !cancelled && (
-              <p className="text-sm text-stone-600 mt-3">
-                {booking.location_label && <span className="font-medium text-stone-800">{booking.location_label} · </span>}
-                {booking.location_address}
-              </p>
-            )}
-            {!cancelled && (
-              <div className="grid grid-cols-2 gap-2 mt-4">
-                <a href={icsHref(data)} download="rendez-vous.ics" className="text-center text-sm font-medium border border-stone-200 rounded-xl py-3 text-stone-700 hover:bg-stone-50">Ajouter au calendrier</a>
-                {mapsHref
-                  ? <a href={mapsHref} target="_blank" rel="noopener noreferrer" className="text-center text-sm font-medium border border-stone-200 rounded-xl py-3 text-stone-700 hover:bg-stone-50">Itinéraire</a>
-                  : presta?.phone
-                    ? <a href={`tel:${presta.phone}`} className="text-center text-sm font-medium border border-stone-200 rounded-xl py-3 text-stone-700 hover:bg-stone-50">Appeler</a>
-                    : <span />}
-              </div>
-            )}
-            {mapsHref && presta?.phone && !cancelled && (
-              <a href={`tel:${presta.phone}`} className="mt-3 flex items-center gap-1.5 text-sm text-stone-600"><PhoneIcon className="w-4 h-4" />{presta.phone}</a>
-            )}
-            {cancelled && presta?.slug && (
-              <a href={`/${presta.slug}`} className="mt-4 block text-center bg-accent-600 hover:bg-accent-700 text-on-accent font-medium py-3 rounded-xl">Reprendre rendez-vous</a>
-            )}
-          </section>
-
-          {messaging.enabled && (
-            <section className="bg-surface border border-stone-200 rounded-2xl flex flex-col" aria-labelledby="chat-title">
-              <h2 id="chat-title" className="px-5 py-4 border-b border-stone-200 font-semibold text-stone-900">Échanger avec {prestaName}</h2>
-              <div className="px-4 py-4 flex flex-col gap-2 min-h-[160px] max-h-[55vh] overflow-y-auto" aria-live="polite">
+          {chatOn && (
+            <section className="flex-1 min-h-0 flex flex-col sm:mb-4 sm:mt-3 sm:bg-surface sm:border sm:border-stone-200 sm:rounded-2xl" aria-label={`Conversation avec ${prestaName}`}>
+              <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 flex flex-col gap-2" aria-live="polite">
                 {data.messages.length === 0 && (
-                  <p className="text-sm text-stone-500 text-center my-auto">Une question avant votre rendez-vous ? Écrivez à {prestaName} ici.</p>
+                  <p className="text-sm text-stone-500 text-center my-auto px-6">Une question avant votre rendez-vous ? Écrivez à {prestaName} ici. Vous recevrez sa réponse par email.</p>
                 )}
                 {data.messages.map(m => {
                   const mine = m.sender === "client";
                   return (
                     <div key={m.id} className={`flex flex-col max-w-[80%] ${mine ? "self-end items-end" : "self-start items-start"}`}>
-                      <p className={`px-4 py-2.5 text-[15px] leading-snug whitespace-pre-wrap break-words ${mine ? "bg-accent-600 text-on-accent rounded-2xl rounded-br-md" : "bg-stone-100 text-stone-900 rounded-2xl rounded-bl-md"}`}>{m.body}</p>
+                      <p className={`px-4 py-2.5 text-[15px] leading-snug whitespace-pre-wrap break-words ${mine ? "bg-accent-600 text-on-accent rounded-2xl rounded-br-md" : "bg-surface border border-stone-200 text-stone-900 rounded-2xl rounded-bl-md"}`}>{m.body}</p>
                       <span className="text-[11px] text-stone-500 mt-1 px-1">{mine ? "Vous" : prestaName} · {formatTime(m.created_at)}</span>
                     </div>
                   );
@@ -216,28 +222,28 @@ export default function RdvPage({ token }: { token: string }) {
                 <div ref={endRef} />
               </div>
               {messaging.writable ? (
-                <form onSubmit={send} className="border-t border-stone-200 p-3 flex flex-col gap-2">
+                <form onSubmit={send} className="bg-surface border-t border-stone-200 sm:rounded-b-2xl px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex flex-col gap-1.5">
                   <div className="flex gap-2 items-end">
                     <label htmlFor="msg" className="sr-only">Votre message</label>
                     <textarea id="msg" value={draft} onChange={e => setDraft(e.target.value.slice(0, MAX_LEN))} rows={1} maxLength={MAX_LEN}
                       onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey && !("ontouchstart" in window)) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }}
                       placeholder={`Écrire à ${prestaName}…`}
-                      className="flex-1 resize-none rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-[15px] focus:outline-none focus:ring-2 focus:ring-accent-500 max-h-40" />
+                      className="flex-1 resize-none rounded-3xl border border-stone-200 bg-stone-50 px-4 py-3 text-[16px] text-stone-900 placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-accent-500 max-h-36" />
                     <button type="submit" disabled={!draft.trim() || sending} aria-label="Envoyer"
-                      className="h-12 px-5 rounded-2xl bg-accent-600 hover:bg-accent-700 text-on-accent font-medium disabled:opacity-40">
-                      {sending ? "…" : "Envoyer"}
+                      className="h-12 w-12 shrink-0 rounded-full bg-accent-600 hover:bg-accent-700 text-on-accent flex items-center justify-center disabled:opacity-40">
+                      <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
                     </button>
                   </div>
-                  {sendError && <p role="alert" className="text-sm text-red-700">{sendError}</p>}
-                  <p className="text-xs text-stone-500">Vous recevrez un email quand {prestaName} vous répond.</p>
+                  {sendError && <p role="alert" className="text-sm text-red-700 px-2">{sendError}</p>}
+                  <p className="text-[11px] text-stone-500 px-2">Lien personnel : ne le partagez pas.</p>
                 </form>
               ) : (
-                <p className="border-t border-stone-200 p-4 text-sm text-stone-500">Cette conversation est fermée.{presta?.phone ? ` Pour joindre ${prestaName} : ${presta.phone}.` : ""}</p>
+                <p className="bg-surface border-t border-stone-200 px-4 py-4 text-sm text-stone-500">Cette conversation est fermée.{presta?.phone ? ` Pour joindre ${prestaName} : ${presta.phone}.` : ""}</p>
               )}
             </section>
           )}
 
-          <p className="text-xs text-stone-500 text-center">Lien personnel : ne le partagez pas. Réservation en ligne avec Book Me Again.</p>
+          {!chatOn && <p className="text-xs text-stone-500 text-center mt-4">Lien personnel : ne le partagez pas.</p>}
         </div>
       </main>
     </>
