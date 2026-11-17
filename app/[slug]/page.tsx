@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase-server";
+import { createPublicClient } from "@/lib/supabase-public";
 import BookingFlow from "@/components/BookingFlow";
 import type { Metadata } from "next";
 import { themeOf, themeStyle } from "@/lib/themes";
@@ -8,7 +8,7 @@ import { themeOf, themeStyle } from "@/lib/themes";
 // quand la presta partage son lien.
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data: presta } = await supabase
     .from("prestas")
     .select("name, bio, avatar_url")
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function PrestaPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   const { data: presta } = await supabase
     .from("prestas")
