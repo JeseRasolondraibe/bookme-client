@@ -15,8 +15,23 @@ export type WebTheme = {
   body: string; head: string; // variables CSS des polices (next/font)
 };
 
-const J = "var(--f-jakarta)", DM = "var(--f-dmsans)", BRIC = "var(--f-bricolage)",
-      INTER = "var(--f-inter)", SPACE = "var(--f-space)", FRAUN = "var(--f-fraunces)", PLAY = "var(--f-playfair)";
+const J = "var(--f-jakarta), system-ui, sans-serif";
+const DM = "'DM Sans', system-ui, sans-serif", BRIC = "'Bricolage Grotesque', system-ui, sans-serif";
+const INTER = "'Inter', system-ui, sans-serif", SPACE = "'Space Grotesk', system-ui, sans-serif";
+const FRAUN = "'Fraunces', Georgia, serif", PLAY = "'Playfair Display', Georgia, serif";
+
+// Familles Google Fonts à charger pour chaque police hors Plus Jakarta Sans.
+const GOOGLE: Record<string, string> = {
+  [DM]: "DM+Sans:wght@400;500;600;700", [BRIC]: "Bricolage+Grotesque:wght@600;700",
+  [INTER]: "Inter:wght@400;500;600;700", [SPACE]: "Space+Grotesk:wght@600;700",
+  [FRAUN]: "Fraunces:wght@600;700", [PLAY]: "Playfair+Display:wght@700",
+};
+
+/** URL Google Fonts des polices de l'ambiance, ou null (Plus Jakarta Sans déjà chargée). */
+export function fontsHref(t: WebTheme): string | null {
+  const fams = [...new Set([t.body, t.head])].map(f => GOOGLE[f]).filter(Boolean);
+  return fams.length ? `https://fonts.googleapis.com/css2?${fams.map(f => `family=${f}`).join("&")}&display=swap` : null;
+}
 
 export const WEB_THEMES: Record<string, WebTheme> = {
   epure:      { dark: false, bg: "#F5F5F8", surface: "#FFFFFF", surface2: "#ECECF2", border: "#E6E6EC", text: "#111114", muted: "#5E5F6E", accent: "#3B3BD6", onAccent: "#FFFFFF", accentSoft: "#EDEDFD", body: J, head: J },

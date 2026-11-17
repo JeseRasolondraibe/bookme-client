@@ -7,7 +7,7 @@ import StepConfirm from "./steps/StepConfirm";
 import PrestaCard from "./PrestaCard";
 import BookingSummary from "./BookingSummary";
 import PortfolioGallery from "./PortfolioGallery";
-import { themeOf, themeStyle } from "@/lib/themes";
+import { themeOf, themeStyle, fontsHref } from "@/lib/themes";
 import { formatPrice } from "@/lib/price";
 
 export type Presta  = {
@@ -81,8 +81,12 @@ export default function BookingFlow({ presta, services }: { presta: Presta; serv
   // cohérents avec le bouton du navigateur.
   const goBack = () => window.history.back();
 
+  const theme = themeOf(presta.theme);
+  const fonts = fontsHref(theme);
   return (
-    <main style={themeStyle(themeOf(presta.theme))}
+    <>
+    {fonts && <link rel="stylesheet" href={fonts} precedence="default" />}
+    <main style={themeStyle(theme)}
       className={`min-h-screen bg-stone-50 pt-6 px-3 sm:px-4 lg:px-6 ${step === 1 && booking.service ? "pb-28 lg:pb-6" : "pb-6"}`}>
       <div className="w-full max-w-[1600px] mx-auto">
         {/*
@@ -154,5 +158,6 @@ export default function BookingFlow({ presta, services }: { presta: Presta; serv
         </div>
       )}
     </main>
+    </>
   );
 }
