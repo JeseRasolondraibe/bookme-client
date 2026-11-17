@@ -1,5 +1,5 @@
 "use client";
-import { Booking } from "./BookingFlow";
+import { Booking, totalPrice } from "./BookingFlow";
 import { ClockIcon, TagIcon, CalendarIcon } from "./icons";
 import { formatDuration } from "@/lib/duration";
 import { formatPrice } from "@/lib/price";
@@ -18,7 +18,7 @@ export default function BookingSummary({ booking, step, onContinue }: {
   step: number;
   onContinue: () => void;
 }) {
-  const { service, date, time, location } = booking;
+  const { service, date, time, location, options = [] } = booking;
   if (!service) return null;
 
   return (
@@ -26,6 +26,13 @@ export default function BookingSummary({ booking, step, onContinue }: {
       <div className="bg-surface rounded-2xl border border-stone-200 p-5">
         <p className="text-xs font-medium text-stone-400 uppercase tracking-wide mb-3">Votre réservation</p>
         <p className="text-sm font-semibold text-stone-900">{service.name}</p>
+        {options.length > 0 && (
+          <ul className="mt-1 flex flex-col gap-0.5">
+            {options.map(o => (
+              <li key={o.id} className="text-xs text-stone-500">+ {o.name}{Number(o.price) > 0 ? ` (${formatPrice(o.price)})` : ""}</li>
+            ))}
+          </ul>
+        )}
 
         <div className="flex flex-col gap-2 mt-3">
           <p className="flex items-center gap-2 text-sm text-stone-500">
@@ -34,7 +41,7 @@ export default function BookingSummary({ booking, step, onContinue }: {
           </p>
           <p className="flex items-center gap-2 text-sm text-stone-500">
             <TagIcon className="w-3.5 h-3.5 text-stone-400" />
-            {formatPrice(service.price)}
+            {formatPrice(totalPrice(service, options))}
           </p>
           {date && time && (
             <p className="flex items-center gap-2 text-sm text-stone-500 first-letter:uppercase">

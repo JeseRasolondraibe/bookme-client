@@ -71,17 +71,22 @@ export default async function PrestaPage({ params }: { params: Promise<{ slug: s
 
   const { data: services } = await supabase
     .from("services")
-    .select("id, name, duration_min, price, photo_url, description, service_videos(id, platform, video_id, position)")
+    .select("id, name, duration_min, price, photo_url, description, service_videos(id, platform, video_id, position), service_options(id, name, price, position, is_active)")
     .eq("presta_id", presta.id)
     .eq("is_active", true)
     .order("price")
-    .order("position", { referencedTable: "service_videos" });
+    .order("position", { referencedTable: "service_videos" })
+    .order("position", { referencedTable: "service_options" });
 
   // Supabase renvoie la relation sous le nom de la table ("service_videos") ;
   // on la reformate en "videos" pour matcher le type Service côté client.
   const servicesWithVideos = (services ?? []).map((s) => {
-    const { service_videos, ...rest } = s as typeof s & { service_videos: unknown };
-    return { ...rest, videos: service_videos };
+    const { service_videos, service_options, ...rest } = s as typeof s & {
+      service_videos: unknown;
+      service_options: { id: string; name: string; price: number; position: number; is_active: boolean }[] | null;
+    };
+    const options = (service_options ?? []).filter(o => o.is_active).map(({ is_active: _, ...o }) => o);
+    return { ...rest, videos: service_videos, options };
   });
 
   return <BookingFlow presta={presta} services={servicesWithVideos} />;

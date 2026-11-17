@@ -1,5 +1,5 @@
 "use client";
-import { Booking, Presta } from "../BookingFlow";
+import { Booking, Presta, totalPrice } from "../BookingFlow";
 import { formatPrice } from "@/lib/price";
 
 function formatDate(d: string) {
@@ -33,6 +33,12 @@ export default function StepConfirm({ booking, presta, onRestart }: {
         <div className="flex justify-between text-sm py-1.5 border-b border-stone-100">
           <span className="text-stone-500">Prestation</span><span className="font-medium text-stone-900">{booking.service.name}</span>
         </div>
+        {(booking.options ?? []).length > 0 && (
+          <div className="flex justify-between gap-4 text-sm py-1.5 border-b border-stone-100">
+            <span className="text-stone-500">Options</span>
+            <span className="font-medium text-stone-900 text-right">{(booking.options ?? []).map(o => o.name).join(", ")}</span>
+          </div>
+        )}
         <div className="flex justify-between text-sm py-1.5 border-b border-stone-100">
           <span className="text-stone-500">Date</span><span className="font-medium text-stone-900">{formatDate(booking.date)}</span>
         </div>
@@ -49,7 +55,7 @@ export default function StepConfirm({ booking, presta, onRestart }: {
           </span>
         </div>
         <div className="flex justify-between text-sm py-1.5">
-          <span className="text-stone-500">Prix</span><span className="font-semibold text-stone-900">{formatPrice(booking.service.price)}</span>
+          <span className="text-stone-500">{(booking.options ?? []).length > 0 ? "Total" : "Prix"}</span><span className="font-semibold text-stone-900">{formatPrice(totalPrice(booking.service, booking.options))}</span>
         </div>
       </div>
       <div className="flex flex-col gap-3">
