@@ -22,5 +22,7 @@ export default defineConfig({
   projects: [
     { name: "desktop", use: { ...devices["Desktop Chrome"] } },
     { name: "mobile", use: { ...devices["iPhone 14"] } },
+    // WEB-02 : Chrome Android.
+    { name: "android", use: { ...devices["Pixel 7"] } },
   ],
 });
