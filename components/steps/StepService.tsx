@@ -77,7 +77,7 @@ export default function StepService({ services, selected, selectedOptions, onSel
                       <span className="flex items-center gap-2.5 min-w-0">
                         <input type="checkbox" checked={on} onChange={() => toggle(o)}
                           className="w-4 h-4 shrink-0 accent-[var(--color-accent-600)]" />
-                        <span className="text-sm text-stone-800 truncate">{o.name}</span>
+                        <span className="text-sm font-medium text-stone-900 truncate">{o.name}</span>
                       </span>
                       <span className="text-xs font-medium text-stone-500 shrink-0">
                         {Number(o.price) > 0 ? `+ ${formatPrice(o.price)}` : "Inclus"}
