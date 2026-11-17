@@ -152,8 +152,8 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack, 
     const status = statusOf(iso);
     if (isSel) return "bg-accent-600 text-on-accent font-semibold shadow-sm";
     if (status === "loading") return "bg-stone-50 text-stone-300 animate-pulse";
-    if (status === "available") return "bg-green-100 text-green-800 font-medium hover:bg-green-200 cursor-pointer";
-    if (status === "full")      return "bg-orange-100 text-orange-700 cursor-default";
+    if (status === "available") return "bg-accent-50 text-accent-600 font-semibold ring-1 ring-inset ring-accent-400 hover:bg-accent-400/30 cursor-pointer";
+    if (status === "full")      return "bg-stone-100 text-stone-400 line-through cursor-default";
     if (status === "closed")    return "bg-stone-100 text-stone-400 cursor-default";
     return "bg-stone-50 text-stone-300 cursor-default";
   }
@@ -241,11 +241,11 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack, 
 
           <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-stone-100">
             <div className="flex items-center gap-1.5">
-              <span className="h-3 w-3 rounded bg-green-100 border border-green-200" />
+              <span className="h-3 w-3 rounded bg-accent-50 ring-1 ring-inset ring-accent-400" />
               <span className="text-xs text-stone-500">Disponible</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="h-3 w-3 rounded bg-orange-100 border border-orange-200" />
+              <span className="h-3 w-3 rounded bg-stone-100 border border-stone-200 relative after:absolute after:inset-x-0.5 after:top-1/2 after:h-px after:bg-stone-400" />
               <span className="text-xs text-stone-500">Complet</span>
             </div>
             <div className="flex items-center gap-1.5">
