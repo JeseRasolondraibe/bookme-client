@@ -36,10 +36,12 @@ interface DayAvailability {
  * Cache-Control court renvoyé par la fonction, pour qu'un aller-retour entre
  * deux mois ne retape pas la base.
  */
-async function fetchMonth(slug: string, serviceId: string, month: string): Promise<Record<string, DayAvailability>> {
+async function fetchMonth(slug: string, serviceId: string, month: string, fresh = false): Promise<Record<string, DayAvailability>> {
+  // fresh : après un créneau pris entre-temps, on contourne le cache navigateur
+  // (max-age=30) pour montrer les créneaux réellement libres.
   const r = await fetch(
-    `${SUPABASE_URL}/functions/v1/slots?slug=${slug}&service_id=${serviceId}&month=${month}`,
-    { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
+    `${SUPABASE_URL}/functions/v1/slots?slug=${slug}&service_id=${serviceId}&month=${month}${fresh ? `&t=${Date.now()}` : ""}`,
+    { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }, cache: fresh ? "no-store" : "default" }
   );
   if (!r.ok) throw new Error(`slots ${r.status}`);
   const d = await r.json();
@@ -58,15 +60,19 @@ function SlotButton({ slot, selected, onSelect }: { slot: string; selected: bool
   );
 }
 
-export default function StepSlot({ presta, service, selected, onSelect, onBack }: {
+export default function StepSlot({ presta, service, selected, onSelect, onBack, notice }: {
   presta: Presta; service: Service;
   selected: { date?: string; time?: string };
   onSelect: (date: string, time: string, location: BookingLocation | null) => void;
   onBack: () => void;
+  /** Message affiché quand on revient ici parce que le créneau a été pris (WEB-16). */
+  notice?: string | null;
 }) {
   const today = new Date();
-  const [year,         setYear]         = useState(today.getFullYear());
-  const [month,        setMonth]        = useState(today.getMonth());
+  // On rouvre sur le mois du jour déjà choisi (retour arrière, créneau pris).
+  const start = selected.date ? new Date(selected.date + "T00:00:00") : today;
+  const [year,         setYear]         = useState(start.getFullYear());
+  const [month,        setMonth]        = useState(start.getMonth());
   const [date,         setDate]         = useState<string | null>(selected.date ?? null);
   const [time,         setTime]         = useState<string | null>(selected.time ?? null);
   const [days,         setDays]         = useState<Record<string, DayAvailability>>({});
@@ -99,13 +105,13 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
 
     const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
 
-    fetchMonth(presta.slug, service.id, monthKey)
+    fetchMonth(presta.slug, service.id, monthKey, !!notice)
       .then(d => { if (!cancelled) setDays(d); })
       .catch(() => { if (!cancelled) setMonthError(true); })
       .finally(() => { if (!cancelled) setLoadingMonth(false); });
 
     return () => { cancelled = true; };
-  }, [year, month, presta.slug, service.id]);
+  }, [year, month, presta.slug, service.id, notice]);
 
   // Les créneaux du jour sélectionné sont déjà dans la réponse du mois.
   const slots = date ? (days[date]?.slots ?? []) : [];
@@ -165,6 +171,11 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack }
 
   return (
     <section>
+      {notice && (
+        <div role="alert" className="mb-4 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2.5 text-sm text-orange-800">
+          {notice} Choisissez un autre horaire ci-dessous.
+        </div>
+      )}
       <div className="flex items-center gap-2 mb-4">
         <button onClick={onBack} className="text-stone-400 hover:text-stone-700 text-sm">← Retour</button>
         <span className="ml-auto text-xs bg-accent-50 text-accent-600 px-2 py-1 rounded-lg font-medium">

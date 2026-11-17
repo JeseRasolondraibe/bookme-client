@@ -11,14 +11,17 @@ function formatDate(d: string) {
   return new Date(d + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
 }
 
-export default function StepContact({ booking, onSubmit, onBack }: {
+export default function StepContact({ booking, onSubmit, onBack, onSlotTaken }: {
   booking: Booking;
   onSubmit: (data: Pick<Booking, "client_name" | "client_phone" | "client_email">) => void;
   onBack: () => void;
+  /** WEB-16 : le créneau a été pris entre-temps (409) : retour au choix du créneau. */
+  onSlotTaken?: (message: string, typed: Pick<Booking, "client_name" | "client_phone" | "client_email">) => void;
 }) {
-  const [name,    setName]    = useState("");
-  const [phone,   setPhone]   = useState("");
-  const [email,   setEmail]   = useState("");
+  // Pré-remplis si la cliente revient ici après un créneau pris entre-temps.
+  const [name,    setName]    = useState(booking.client_name ?? "");
+  const [phone,   setPhone]   = useState(booking.client_phone ?? "");
+  const [email,   setEmail]   = useState(booking.client_email ?? "");
   const [emailTouched, setEmailTouched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState("");
@@ -51,6 +54,10 @@ export default function StepContact({ booking, onSubmit, onBack }: {
         }),
       });
       const data = await res.json();
+      if (res.status === 409 && onSlotTaken) {
+        onSlotTaken(data.error ?? "Ce créneau n'est plus disponible.", { client_name: name, client_phone: phone, client_email: email });
+        return;
+      }
       if (!res.ok) throw new Error(data.error ?? "Erreur lors de la réservation");
       onSubmit({ client_name: name, client_phone: phone, client_email: email });
     } catch (e: any) {

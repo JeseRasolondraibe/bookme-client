@@ -60,6 +60,7 @@ function Stepper({ step }: { step: number }) {
 
 export default function BookingFlow({ presta, services }: { presta: Presta; services: Service[] }) {
   const [step,    setStep]    = useState(1);
+  const [slotNotice, setSlotNotice] = useState<string | null>(null);
   const [booking, setBooking] = useState<Partial<Booking>>({});
 
   const patch = (data: Partial<Booking>) => setBooking(b => ({ ...b, ...data }));
@@ -122,8 +123,9 @@ export default function BookingFlow({ presta, services }: { presta: Presta; serv
             )}
 
             {step === 1 && <StepService services={services} selected={booking.service} onSelect={s => patch({ service: s })} />}
-            {step === 2 && <StepSlot presta={presta} service={booking.service!} selected={{ date: booking.date, time: booking.time }} onSelect={(date, time, location) => { patch({ date, time, location }); goTo(3); }} onBack={goBack} />}
-            {step === 3 && <StepContact booking={booking as Booking} onSubmit={data => { patch(data); goTo(4); }} onBack={goBack} />}
+            {step === 2 && <StepSlot presta={presta} service={booking.service!} selected={{ date: booking.date, time: booking.time }} onSelect={(date, time, location) => { setSlotNotice(null); patch({ date, time, location }); goTo(3); }} onBack={goBack} notice={slotNotice} />}
+            {step === 3 && <StepContact booking={booking as Booking} onSubmit={data => { patch(data); goTo(4); }} onBack={goBack}
+              onSlotTaken={(msg, typed) => { setSlotNotice(msg); patch({ ...typed, time: undefined }); goBack(); }} />}
             {step === 4 && <StepConfirm booking={booking as Booking} presta={presta} onRestart={() => { setBooking({}); goTo(1); }} />}
           </div>
 
