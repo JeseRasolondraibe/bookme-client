@@ -1,0 +1,44 @@
+name: E2E navigateur (staging)
+
+# Parcours de réservation dans Chrome et Safari mobile (Playwright), sur la
+# preview staging : après chaque déploiement Vercel de la branche staging,
+# chaque nuit, et à la demande.
+
+on:
+  deployment_status:
+  schedule:
+    - cron: "37 4 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-web-staging
+  cancel-in-progress: false
+
+jobs:
+  playwright:
+    if: >-
+      github.event_name != 'deployment_status' ||
+      (github.event.deployment_status.state == 'success' && github.event.deployment.ref == 'staging')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: e2e
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npx playwright test
+        env:
+          BASE_URL: ${{ github.event.deployment_status.target_url || 'https://bookme-client-git-staging-jeserasolondraibes-projects.vercel.app' }}
+          STAGING_SERVICE_KEY: ${{ secrets.STAGING_SERVICE_KEY }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: e2e/playwright-report
+          retention-days: 7
