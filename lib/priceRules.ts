@@ -27,6 +27,17 @@ export function applyRules(base: number, rules: PriceRuleEffect[]): { price: num
   return { price, adjustments };
 }
 
+/** Code promo (lien de campagne ou saisi), revalidé par bookings. */
+export type Promo = { code: string; percent: number; valid_date?: string | null; valid_times?: string[] | null; manual?: boolean };
+export function promoApplies(p: Promo | null | undefined, date?: string, time?: string): boolean {
+  if (!p) return false;
+  if (p.valid_date && p.valid_date !== date) return false;
+  if (p.valid_times?.length && (!time || !p.valid_times.includes(time))) return false;
+  return true;
+}
+export const promoEffect = (p: Promo): PriceRuleEffect =>
+  ({ id: "promo", name: `Code ${p.code}`, direction: "down", effect_type: "percent", effect_value: p.percent });
+
 export function priceForSlot(base: number, all: PriceRuleEffect[], ids: string[] | undefined) {
   return applyRules(base, ids?.length ? all.filter(r => ids.includes(r.id)) : []);
 }

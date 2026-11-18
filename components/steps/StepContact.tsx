@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { Booking, Presta, bookingPrice } from "../BookingFlow";
+import { Booking, Presta, bookingPricing } from "../BookingFlow";
+import { type Promo, promoApplies } from "@/lib/priceRules";
 import { depositAmount, refundDelayLabel } from "@/lib/deposit";
 import Turnstile, { TURNSTILE_SITE_KEY } from "../Turnstile";
 import { formatPrice } from "@/lib/price";
@@ -12,8 +13,10 @@ function formatDate(d: string) {
   return new Date(d + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
 }
 
-export default function StepContact({ booking, presta, onSubmit, onBack, onSlotTaken }: {
+export default function StepContact({ booking, presta, campaign, onPromo, onSubmit, onBack, onSlotTaken }: {
   booking: Booking;
+  campaign?: string | null;
+  onPromo?: (promo: Promo | null) => void;
   presta?: Presta;
   onSubmit: (data: Pick<Booking, "client_name" | "client_phone" | "client_email">) => void;
   onBack: () => void;
@@ -28,17 +31,42 @@ export default function StepContact({ booking, presta, onSubmit, onBack, onSlotT
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState("");
   const [captcha, setCaptcha] = useState("");
+  // Consentement marketing : jamais coché par défaut (RGPD).
+  const [optIn,   setOptIn]   = useState(false);
+  const [code,    setCode]    = useState("");
+  const [codeMsg, setCodeMsg] = useState("");
+  const [checkingCode, setCheckingCode] = useState(false);
   const [captchaReset, setCaptchaReset] = useState(0);
   // Format volontairement permissif (pas de RFC 5322 complet) : on veut juste
   // écarter les fautes de frappe grossières, pas rejeter des adresses
   // valides mais inhabituelles. L'email est obligatoire depuis que c'est le
   // seul canal de confirmation/rappel (le SMS a été retiré).
-  const total = bookingPrice(booking);
+  const pricing = bookingPricing(booking);
+  const total = pricing.price;
+  const promoOn = promoApplies(booking.promo, booking.date, booking.time);
   const deposit = presta?.deposits_enabled && presta?.stripe_charges_enabled ? depositAmount(booking.service, total) : 0;
   const refundHours = presta?.cancel_refund_hours ?? 48;
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   const valid = name.trim().length > 1 && phone.trim().length >= 8 && emailValid
     && (!TURNSTILE_SITE_KEY || !!captcha);
+
+  // Code saisi : vérifié par slots (remise, jour, créneaux), revalidé par bookings.
+  async function applyCode() {
+    const c = code.trim();
+    if (!c) return;
+    setCheckingCode(true); setCodeMsg("");
+    try {
+      const slug = window.location.pathname.split("/")[1];
+      const r = await fetch(`${SUPABASE_URL}/functions/v1/slots?slug=${slug}&service_id=${booking.service.id}&date=${booking.date}&code=${encodeURIComponent(c)}`,
+        { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }, cache: "no-store" });
+      const d = await r.json();
+      const p = d?.promo as Promo | null;
+      if (!p) { setCodeMsg("Ce code n'est pas valable."); return; }
+      if (!promoApplies(p, booking.date, booking.time)) { setCodeMsg("Ce code ne vaut pas pour ce créneau."); return; }
+      onPromo?.({ ...p, manual: true }); setCode("");
+    } catch { setCodeMsg("Vérification impossible, réessayez."); }
+    finally { setCheckingCode(false); }
+  }
 
   async function handleSubmit() {
     if (!valid) return;
@@ -56,6 +84,9 @@ export default function StepContact({ booking, presta, onSubmit, onBack, onSlotT
           slug, service_id: booking.service.id, option_ids: (booking.options ?? []).map(o => o.id), date: booking.date, time: booking.time,
           client_name: name.trim(), client_phone: phone.trim(), client_email: email.trim(),
           turnstile_token: captcha || undefined,
+          marketing_opt_in: optIn,
+          campaign: campaign ?? undefined,
+          promo_code: booking.promo?.manual && promoOn ? booking.promo.code : undefined,
         }),
       });
       const data = await res.json();
@@ -95,14 +126,14 @@ export default function StepContact({ booking, presta, onSubmit, onBack, onSlotT
         <div className="flex justify-between text-sm py-1.5 border-b border-stone-100">
           <span className="text-stone-500">Heure</span><span className="font-medium text-stone-900">{booking.time}</span>
         </div>
-        {(booking.slotPrice?.adjustments ?? []).map(a => (
+        {pricing.adjustments.map(a => (
           <div key={a.name} className="flex justify-between gap-4 text-sm py-1.5 border-b border-stone-100">
             <span className="text-stone-500">{a.name}</span>
             <span className="font-medium text-stone-900">{a.amount > 0 ? "+" : "−"}{formatPrice(Math.abs(a.amount))}</span>
           </div>
         ))}
         <div className="flex justify-between text-sm py-1.5">
-          <span className="text-stone-500">{(booking.options ?? []).length > 0 || booking.slotPrice ? "Total" : "Prix"}</span><span className="font-semibold text-stone-900">{formatPrice(total)}</span>
+          <span className="text-stone-500">{(booking.options ?? []).length > 0 || pricing.adjustments.length > 0 ? "Total" : "Prix"}</span><span className="font-semibold text-stone-900">{formatPrice(total)}</span>
         </div>
         {deposit > 0 && (
           <>
@@ -145,6 +176,24 @@ export default function StepContact({ booking, presta, onSubmit, onBack, onSlotT
             : <p className="text-xs text-stone-400 mt-1.5">Pour la confirmation et le rappel de votre rendez-vous.</p>}
         </div>
       </div>
+      <div className="mt-4">
+        {promoOn ? (
+          <p className="text-sm text-stone-600">Code <span className="font-semibold text-stone-900">{booking.promo!.code}</span> appliqué (−{String(booking.promo!.percent).replace(".", ",")} %)
+            {booking.promo!.manual && <button type="button" onClick={() => onPromo?.(null)} className="ml-2 text-xs text-accent-600 underline">Retirer</button>}</p>
+        ) : (
+          <div className="flex gap-2">
+            <input type="text" value={code} onChange={e => { setCode(e.target.value); setCodeMsg(""); }} placeholder="Code promo (facultatif)"
+              className="flex-1 border border-stone-200 rounded-xl px-4 py-2.5 text-sm text-stone-900 placeholder:text-stone-300 focus:outline-none focus:border-accent-500 bg-surface uppercase" />
+            <button type="button" onClick={applyCode} disabled={!code.trim() || checkingCode}
+              className="px-4 rounded-xl border border-stone-200 text-sm font-medium text-stone-700 disabled:text-stone-300">{checkingCode ? "…" : "Appliquer"}</button>
+          </div>
+        )}
+        {codeMsg && <p className="text-xs text-red-500 mt-1.5">{codeMsg}</p>}
+      </div>
+      <label className="mt-4 flex items-start gap-3 text-sm text-stone-600 cursor-pointer">
+        <input type="checkbox" checked={optIn} onChange={e => setOptIn(e.target.checked)} className="mt-0.5 h-4 w-4 accent-accent-600" />
+        <span>J&apos;accepte de recevoir les offres de {presta?.name ?? "mon prestataire"} par email (rappels, créneaux de dernière minute). Désinscription en un clic.</span>
+      </label>
       <Turnstile onToken={setCaptcha} resetKey={captchaReset} />
       {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
       <button onClick={handleSubmit} disabled={!valid || loading}
