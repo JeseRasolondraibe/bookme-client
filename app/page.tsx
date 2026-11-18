@@ -6,13 +6,13 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Book Me Again – Votre page de réservation en ligne",
-  description: "La page de réservation des prestataires indépendantes : vos clientes réservent en ligne, vous gérez tout depuis l'app. 13,99 € par mois, 14 jours d'essai.",
+  description: "La page de réservation des prestataires indépendant(e)s : vos client(e)s réservent en ligne, vous gérez tout depuis l'app. 13,99 € par mois, 14 jours d'essai.",
 };
 
 const POINTS = [
-  { title: "Votre lien de réservation", text: "Une page à votre image, à partager sur Instagram, TikTok ou WhatsApp. Vos clientes réservent sans créer de compte." },
+  { title: "Votre lien de réservation", text: "Une page à votre image, à partager sur Instagram, TikTok ou WhatsApp. Vos client(e)s réservent sans créer de compte." },
   { title: "Votre planning, vos règles", text: "Horaires, pauses, congés, plusieurs lieux, séances : les créneaux proposés suivent votre organisation." },
-  { title: "Moins d'oublis", text: "Confirmation immédiate et rappel la veille par email. Votre adresse exacte n'est communiquée qu'aux clientes qui réservent." },
+  { title: "Moins d'oublis", text: "Confirmation immédiate et rappel la veille par email. Votre adresse exacte n'est communiquée qu'aux client(e)s qui réservent." },
 ];
 
 export default function Home() {
@@ -21,10 +21,10 @@ export default function Home() {
       <div className="max-w-3xl mx-auto">
         <p className="text-sm font-semibold text-accent-600">Book Me Again</p>
         <h1 className="font-head mt-3 text-4xl sm:text-5xl font-bold tracking-tight text-stone-900 leading-tight">
-          Vos clientes réservent en ligne.<br />Vous gardez la main.
+          Vos client(e)s réservent en ligne.<br />Vous gardez la main.
         </h1>
         <p className="mt-5 text-lg text-stone-600 max-w-2xl">
-          L&apos;app des prestataires indépendantes (ongles, coiffure, soins, massage) pour recevoir
+          L&apos;app des prestataires indépendant(e)s (ongles, coiffure, soins, massage) pour recevoir
           des réservations 24h/24 sans gérer les messages un par un.
         </p>
 
