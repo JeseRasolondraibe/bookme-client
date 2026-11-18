@@ -6,7 +6,9 @@
 export type PriceRuleEffect = { id: string; name: string; direction: "up" | "down"; effect_type: "percent" | "fixed"; effect_value: number };
 export type Adjustment = { name: string; amount: number };
 
-const MAX_SHIFT = 0.5;
+// Plafond sur l'ensemble des règles cumulées : +100 % / −50 %.
+const MAX_UP = 1;
+const MAX_DOWN = 0.5;
 const ROUND_STEP = 0.5;
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -18,7 +20,7 @@ export function applyRules(base: number, rules: PriceRuleEffect[]): { price: num
     return { name: r.name, amount: r2(r.direction === "down" ? -raw : raw) };
   });
   const shift = adjustments.reduce((t, a) => t + a.amount, 0);
-  const capped = Math.max(-base * MAX_SHIFT, Math.min(base * MAX_SHIFT, shift));
+  const capped = Math.max(-base * MAX_DOWN, Math.min(base * MAX_UP, shift));
   const price = r2(Math.max(0.5, Math.round((base + capped) / ROUND_STEP) * ROUND_STEP));
   const diff = r2(price - base - shift);
   if (diff !== 0) adjustments.push({ name: Math.abs(capped) < Math.abs(shift) ? "Plafond" : "Arrondi", amount: diff });

@@ -52,7 +52,7 @@ async function fetchMonth(slug: string, serviceId: string, month: string, fresh 
   return { days: (d.days ?? {}) as Record<string, DayAvailability>, rules: (d.price_rules ?? []) as PriceRuleEffect[] };
 }
 
-function SlotButton({ slot, selected, onSelect, price, base }: { slot: string; selected: boolean; onSelect: () => void; price?: number; base?: number }) {
+function SlotButton({ slot, selected, onSelect, price, base, reason }: { slot: string; selected: boolean; onSelect: () => void; price?: number; base?: number; reason?: string }) {
   return (
     <button onClick={onSelect}
       className={`py-2.5 text-sm rounded-xl border transition-all active:scale-[0.98]
@@ -65,6 +65,7 @@ function SlotButton({ slot, selected, onSelect, price, base }: { slot: string; s
           {formatPrice(price)}
         </span>
       )}
+      {reason && <span className="block text-[10px] leading-tight text-stone-500 truncate px-1">{reason}</span>}
     </button>
   );
 }
@@ -131,6 +132,11 @@ export default function StepSlot({ presta, service, basePrice, selected, onSelec
   // réseau supplémentaire au clic sur une date.
   const location = date ? (days[date]?.location ?? null) : null;
   // Prix par créneau : seulement si la presta a des règles pour cette prestation.
+  // Motif affiché sous le prix : la première règle (+N s'il y en a d'autres).
+  const slotReason = (t: string) => {
+    const names = (slotPrice(t)?.adjustments ?? []).map(a => a.name).filter(n => n !== "Arrondi" && n !== "Plafond");
+    return names.length ? names[0] + (names.length > 1 ? ` +${names.length - 1}` : "") : undefined;
+  };
   const slotPrice = (t: string) => rules.length > 0 && date ? priceForSlot(basePrice, rules, days[date]?.slot_rules?.[t]) : null;
 
   /**
@@ -302,7 +308,7 @@ export default function StepSlot({ presta, service, basePrice, selected, onSelec
                   <p className="text-xs font-medium text-stone-500 mb-2 uppercase tracking-wide">Matin</p>
                   <div className="grid grid-cols-3 gap-2">
                     {morningSlots.map(s => (
-                      <SlotButton key={s} slot={s} selected={time === s} onSelect={() => setTime(s)} price={slotPrice(s)?.price} base={basePrice} />
+                      <SlotButton key={s} slot={s} selected={time === s} onSelect={() => setTime(s)} price={slotPrice(s)?.price} base={basePrice} reason={slotReason(s)} />
                     ))}
                   </div>
                 </div>
@@ -312,7 +318,7 @@ export default function StepSlot({ presta, service, basePrice, selected, onSelec
                   <p className="text-xs font-medium text-stone-500 mb-2 uppercase tracking-wide">Après-midi</p>
                   <div className="grid grid-cols-3 gap-2">
                     {afternoonSlots.map(s => (
-                      <SlotButton key={s} slot={s} selected={time === s} onSelect={() => setTime(s)} price={slotPrice(s)?.price} base={basePrice} />
+                      <SlotButton key={s} slot={s} selected={time === s} onSelect={() => setTime(s)} price={slotPrice(s)?.price} base={basePrice} reason={slotReason(s)} />
                     ))}
                   </div>
                 </div>

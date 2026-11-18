@@ -27,7 +27,9 @@ export type Presta  = {
 export type ServiceVideo = { id: string; platform: "tiktok" | "instagram" | "youtube"; video_id: string; position: number };
 /** Supplément facultatif : n'ajoute pas de temps, seulement un prix (0 € possible). */
 export type ServiceOption = { id: string; name: string; price: number; position: number };
-export type Service = { id: string; name: string; duration_min: number; price: number; photo_url?: string; description?: string; videos?: ServiceVideo[]; options?: ServiceOption[]; deposit_type?: string | null; deposit_value?: number | null };
+export type Service = { id: string; name: string; duration_min: number; price: number; photo_url?: string; description?: string; videos?: ServiceVideo[]; options?: ServiceOption[]; deposit_type?: string | null; deposit_value?: number | null;
+  /** Prix ajusté selon le créneau (règles de prix de la presta). */
+  has_price_rules?: boolean };
 /** Prix total affiché à la cliente (le serveur le recalcule de son côté). */
 export function totalPrice(service: Service, options: ServiceOption[] = []): number {
   return Math.round((Number(service.price) + options.reduce((t, o) => t + Number(o.price), 0)) * 100) / 100;
@@ -182,7 +184,7 @@ export default function BookingFlow({ presta, services }: { presta: Presta; serv
           <div className="max-w-xl mx-auto flex items-center gap-3">
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-stone-900 truncate">{booking.service.name}</p>
-              <p className="text-xs text-stone-500">{formatPrice(totalPrice(booking.service, booking.options))}</p>
+              <p className="text-xs text-stone-500">{formatPrice(totalPrice(booking.service, booking.options))}{booking.service.has_price_rules ? " · selon le créneau" : ""}</p>
             </div>
             <button type="button" onClick={() => goTo(2)}
               className="shrink-0 bg-accent-600 hover:bg-accent-700 text-on-accent font-semibold text-sm px-5 py-3 rounded-xl shadow-sm active:scale-[0.98]">

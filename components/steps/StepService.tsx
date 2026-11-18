@@ -56,6 +56,7 @@ export default function StepService({ services, selected, selectedOptions, onSel
                       <TagIcon className="w-3.5 h-3.5 text-stone-400" />
                       {formatPrice(s.price)}
                     </span>
+                    {s.has_price_rules && <span className="text-xs text-stone-500">Prix selon le créneau</span>}
                   </div>
                 </div>
               </div>
