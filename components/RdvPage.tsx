@@ -12,7 +12,7 @@ const HEADERS = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABA
 const POLL_MS = 8000;
 const MAX_LEN = 1000;
 
-type Message = { id: string; sender: "presta" | "client"; body: string; created_at: string };
+type Message = { id: string; booking_id?: string; sender: "presta" | "client"; body: string; created_at: string };
 type RdvData = {
   booking: {
     booked_at: string; status: string; service_name: string | null; duration_min: number | null;
@@ -22,6 +22,8 @@ type RdvData = {
   presta: { name: string; slug: string; phone: string | null; avatar_url: string | null; city: string | null; theme: string | null } | null;
   messaging: { enabled: boolean; writable: boolean };
   messages: Message[];
+  /** RDV du même client(e) chez cette presta : le fil est commun à tous. */
+  bookings?: Record<string, { booked_at: string; service_name: string | null; status: string }>;
 };
 
 // booked_at = heure murale de Paris avec +00:00 de convenance : on affiche
@@ -210,12 +212,18 @@ export default function RdvPage({ token }: { token: string }) {
                 {data.messages.length === 0 && (
                   <p className="text-sm text-stone-500 text-center my-auto px-6">Une question avant votre rendez-vous ? Écrivez à {prestaName} ici. Vous recevrez sa réponse par email.</p>
                 )}
-                {data.messages.map(m => {
+                {data.messages.map((m, i) => {
                   const mine = m.sender === "client";
+                  const prev = i > 0 ? data.messages[i - 1] : null;
+                  const about = data.bookings && Object.keys(data.bookings).length > 1 && m.booking_id && (!prev || prev.booking_id !== m.booking_id)
+                    ? data.bookings[m.booking_id] : null;
                   return (
-                    <div key={m.id} className={`flex flex-col max-w-[80%] ${mine ? "self-end items-end" : "self-start items-start"}`}>
+                    <div key={m.id} className="contents">
+                    {about && <p className="self-center text-[11px] font-medium text-stone-500 my-2">À propos du RDV {about.service_name ? `${about.service_name} · ` : ""}{formatWhen(about.booked_at)}</p>}
+                    <div className={`flex flex-col max-w-[80%] ${mine ? "self-end items-end" : "self-start items-start"}`}>
                       <p className={`px-4 py-2.5 text-[15px] leading-snug whitespace-pre-wrap break-words ${mine ? "bg-accent-600 text-on-accent rounded-2xl rounded-br-md" : "bg-surface border border-stone-200 text-stone-900 rounded-2xl rounded-bl-md"}`}>{m.body}</p>
                       <span className="text-[11px] text-stone-500 mt-1 px-1">{mine ? "Vous" : prestaName} · {formatTime(m.created_at)}</span>
+                    </div>
                     </div>
                   );
                 })}
