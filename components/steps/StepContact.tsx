@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Booking, Presta, totalPrice } from "../BookingFlow";
+import { Booking, Presta, bookingPrice } from "../BookingFlow";
 import { depositAmount, refundDelayLabel } from "@/lib/deposit";
 import Turnstile, { TURNSTILE_SITE_KEY } from "../Turnstile";
 import { formatPrice } from "@/lib/price";
@@ -33,7 +33,7 @@ export default function StepContact({ booking, presta, onSubmit, onBack, onSlotT
   // écarter les fautes de frappe grossières, pas rejeter des adresses
   // valides mais inhabituelles. L'email est obligatoire depuis que c'est le
   // seul canal de confirmation/rappel (le SMS a été retiré).
-  const total = totalPrice(booking.service, booking.options);
+  const total = bookingPrice(booking);
   const deposit = presta?.deposits_enabled && presta?.stripe_charges_enabled ? depositAmount(booking.service, total) : 0;
   const refundHours = presta?.cancel_refund_hours ?? 48;
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
@@ -95,8 +95,14 @@ export default function StepContact({ booking, presta, onSubmit, onBack, onSlotT
         <div className="flex justify-between text-sm py-1.5 border-b border-stone-100">
           <span className="text-stone-500">Heure</span><span className="font-medium text-stone-900">{booking.time}</span>
         </div>
+        {(booking.slotPrice?.adjustments ?? []).map(a => (
+          <div key={a.name} className="flex justify-between gap-4 text-sm py-1.5 border-b border-stone-100">
+            <span className="text-stone-500">{a.name}</span>
+            <span className="font-medium text-stone-900">{a.amount > 0 ? "+" : "−"}{formatPrice(Math.abs(a.amount))}</span>
+          </div>
+        ))}
         <div className="flex justify-between text-sm py-1.5">
-          <span className="text-stone-500">{(booking.options ?? []).length > 0 ? "Total" : "Prix"}</span><span className="font-semibold text-stone-900">{formatPrice(total)}</span>
+          <span className="text-stone-500">{(booking.options ?? []).length > 0 || booking.slotPrice ? "Total" : "Prix"}</span><span className="font-semibold text-stone-900">{formatPrice(total)}</span>
         </div>
         {deposit > 0 && (
           <>

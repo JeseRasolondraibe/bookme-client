@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { BookingLocation, Presta, Service } from "../BookingFlow";
 import { resolveHorizonDate, formatHorizonLabel } from "@/lib/horizon";
 import { formatPrice } from "@/lib/price";
+import { type Adjustment, type PriceRuleEffect, priceForSlot } from "@/lib/priceRules";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://flrtdhzcimbkbcgczmea.supabase.co";
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -21,7 +22,10 @@ interface DayAvailability {
   slots: string[];
   /** Où se déroule le rdv ce jour-là. Absent = presta sans adresse. */
   location?: BookingLocation | null;
+  /** Règles de prix qui s'appliquent, par créneau ("HH:MM" → ids). */
+  slot_rules?: Record<string, string[]>;
 }
+interface MonthResponse { days: Record<string, DayAvailability>; rules: PriceRuleEffect[] }
 
 /**
  * Récupère les disponibilités de tout le mois en une seule requête.
@@ -36,7 +40,7 @@ interface DayAvailability {
  * Cache-Control court renvoyé par la fonction, pour qu'un aller-retour entre
  * deux mois ne retape pas la base.
  */
-async function fetchMonth(slug: string, serviceId: string, month: string, fresh = false): Promise<Record<string, DayAvailability>> {
+async function fetchMonth(slug: string, serviceId: string, month: string, fresh = false): Promise<MonthResponse> {
   // fresh : après un créneau pris entre-temps, on contourne le cache navigateur
   // (max-age=30) pour montrer les créneaux réellement libres.
   const r = await fetch(
@@ -45,10 +49,10 @@ async function fetchMonth(slug: string, serviceId: string, month: string, fresh 
   );
   if (!r.ok) throw new Error(`slots ${r.status}`);
   const d = await r.json();
-  return (d.days ?? {}) as Record<string, DayAvailability>;
+  return { days: (d.days ?? {}) as Record<string, DayAvailability>, rules: (d.price_rules ?? []) as PriceRuleEffect[] };
 }
 
-function SlotButton({ slot, selected, onSelect }: { slot: string; selected: boolean; onSelect: () => void }) {
+function SlotButton({ slot, selected, onSelect, price, base }: { slot: string; selected: boolean; onSelect: () => void; price?: number; base?: number }) {
   return (
     <button onClick={onSelect}
       className={`py-2.5 text-sm rounded-xl border transition-all active:scale-[0.98]
@@ -56,14 +60,21 @@ function SlotButton({ slot, selected, onSelect }: { slot: string; selected: bool
           ? "border-accent-600 bg-accent-50 text-accent-600 font-medium ring-1 ring-accent-400"
           : "border-stone-200 bg-surface text-stone-700 hover:border-accent-400"}`}>
       {slot}
+      {price !== undefined && base !== undefined && (
+        <span className={`block text-[11px] leading-tight ${price > base ? "text-red-600" : price < base ? "text-emerald-700" : "text-stone-500"}`}>
+          {formatPrice(price)}
+        </span>
+      )}
     </button>
   );
 }
 
-export default function StepSlot({ presta, service, selected, onSelect, onBack, notice }: {
+export default function StepSlot({ presta, service, basePrice, selected, onSelect, onBack, notice }: {
   presta: Presta; service: Service;
+  /** Prestation + options cochées, avant règles de prix. */
+  basePrice: number;
   selected: { date?: string; time?: string };
-  onSelect: (date: string, time: string, location: BookingLocation | null) => void;
+  onSelect: (date: string, time: string, location: BookingLocation | null, slotPrice: { price: number; adjustments: Adjustment[] } | null) => void;
   onBack: () => void;
   /** Message affiché quand on revient ici parce que le créneau a été pris (WEB-16). */
   notice?: string | null;
@@ -76,6 +87,7 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack, 
   const [date,         setDate]         = useState<string | null>(selected.date ?? null);
   const [time,         setTime]         = useState<string | null>(selected.time ?? null);
   const [days,         setDays]         = useState<Record<string, DayAvailability>>({});
+  const [rules,        setRules]        = useState<PriceRuleEffect[]>([]);
   const [loadingMonth, setLoadingMonth] = useState(false);
   const [monthError,   setMonthError]   = useState(false);
 
@@ -106,7 +118,7 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack, 
     const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
 
     fetchMonth(presta.slug, service.id, monthKey, !!notice)
-      .then(d => { if (!cancelled) setDays(d); })
+      .then(d => { if (!cancelled) { setDays(d.days); setRules(d.rules); } })
       .catch(() => { if (!cancelled) setMonthError(true); })
       .finally(() => { if (!cancelled) setLoadingMonth(false); });
 
@@ -118,6 +130,8 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack, 
   // Idem pour le lieu : il voyage avec la disponibilité du jour, aucun appel
   // réseau supplémentaire au clic sur une date.
   const location = date ? (days[date]?.location ?? null) : null;
+  // Prix par créneau : seulement si la presta a des règles pour cette prestation.
+  const slotPrice = (t: string) => rules.length > 0 && date ? priceForSlot(basePrice, rules, days[date]?.slot_rules?.[t]) : null;
 
   /**
    * Un jour absent de la réponse est un jour que le serveur ne propose pas
@@ -288,7 +302,7 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack, 
                   <p className="text-xs font-medium text-stone-500 mb-2 uppercase tracking-wide">Matin</p>
                   <div className="grid grid-cols-3 gap-2">
                     {morningSlots.map(s => (
-                      <SlotButton key={s} slot={s} selected={time === s} onSelect={() => setTime(s)} />
+                      <SlotButton key={s} slot={s} selected={time === s} onSelect={() => setTime(s)} price={slotPrice(s)?.price} base={basePrice} />
                     ))}
                   </div>
                 </div>
@@ -298,7 +312,7 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack, 
                   <p className="text-xs font-medium text-stone-500 mb-2 uppercase tracking-wide">Après-midi</p>
                   <div className="grid grid-cols-3 gap-2">
                     {afternoonSlots.map(s => (
-                      <SlotButton key={s} slot={s} selected={time === s} onSelect={() => setTime(s)} />
+                      <SlotButton key={s} slot={s} selected={time === s} onSelect={() => setTime(s)} price={slotPrice(s)?.price} base={basePrice} />
                     ))}
                   </div>
                 </div>
@@ -309,7 +323,7 @@ export default function StepSlot({ presta, service, selected, onSelect, onBack, 
       </div>
 
       {date && time && (
-        <button onClick={() => onSelect(date, time, location)}
+        <button onClick={() => { const p = slotPrice(time); onSelect(date, time, location, p && p.adjustments.length > 0 ? p : null); }}
           className="mt-6 w-full bg-accent-600 hover:bg-accent-700 text-on-accent font-medium py-3.5 rounded-xl shadow-sm transition-all active:scale-[0.98]">
           Confirmer ce créneau →
         </button>
