@@ -62,7 +62,7 @@ export default async function PrestaPage({ params }: { params: Promise<{ slug: s
               Appeler {presta.phone}
             </a>
           ) : (
-            <p className="text-sm text-stone-500 mt-4">Contacte directement ta prestataire pour prendre rendez-vous.</p>
+            <p className="text-sm text-stone-500 mt-4">Contacte directement ton prestataire pour prendre rendez-vous.</p>
           )}
         </div>
       </main>
