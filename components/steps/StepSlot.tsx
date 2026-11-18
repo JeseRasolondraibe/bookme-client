@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { BookingLocation, Presta, Service } from "../BookingFlow";
 import { resolveHorizonDate, formatHorizonLabel } from "@/lib/horizon";
 import { formatPrice } from "@/lib/price";
-import { type Adjustment, type PriceRuleEffect, priceForSlot } from "@/lib/priceRules";
+import { type PriceRuleEffect, type Promo, applyRules, promoApplies, promoEffect } from "@/lib/priceRules";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://flrtdhzcimbkbcgczmea.supabase.co";
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -25,7 +25,7 @@ interface DayAvailability {
   /** Règles de prix qui s'appliquent, par créneau ("HH:MM" → ids). */
   slot_rules?: Record<string, string[]>;
 }
-interface MonthResponse { days: Record<string, DayAvailability>; rules: PriceRuleEffect[] }
+interface MonthResponse { days: Record<string, DayAvailability>; rules: PriceRuleEffect[]; promo: Promo | null }
 
 /**
  * Récupère les disponibilités de tout le mois en une seule requête.
@@ -40,16 +40,16 @@ interface MonthResponse { days: Record<string, DayAvailability>; rules: PriceRul
  * Cache-Control court renvoyé par la fonction, pour qu'un aller-retour entre
  * deux mois ne retape pas la base.
  */
-async function fetchMonth(slug: string, serviceId: string, month: string, fresh = false): Promise<MonthResponse> {
+async function fetchMonth(slug: string, serviceId: string, month: string, fresh = false, campaign: string | null = null): Promise<MonthResponse> {
   // fresh : après un créneau pris entre-temps, on contourne le cache navigateur
   // (max-age=30) pour montrer les créneaux réellement libres.
   const r = await fetch(
-    `${SUPABASE_URL}/functions/v1/slots?slug=${slug}&service_id=${serviceId}&month=${month}${fresh ? `&t=${Date.now()}` : ""}`,
+    `${SUPABASE_URL}/functions/v1/slots?slug=${slug}&service_id=${serviceId}&month=${month}${fresh ? `&t=${Date.now()}` : ""}${campaign ? `&c=${campaign}` : ""}`,
     { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }, cache: fresh ? "no-store" : "default" }
   );
   if (!r.ok) throw new Error(`slots ${r.status}`);
   const d = await r.json();
-  return { days: (d.days ?? {}) as Record<string, DayAvailability>, rules: (d.price_rules ?? []) as PriceRuleEffect[] };
+  return { days: (d.days ?? {}) as Record<string, DayAvailability>, rules: (d.price_rules ?? []) as PriceRuleEffect[], promo: (d.promo ?? null) as Promo | null };
 }
 
 function SlotButton({ slot, selected, onSelect, price, base, reason }: { slot: string; selected: boolean; onSelect: () => void; price?: number; base?: number; reason?: string }) {
@@ -70,12 +70,14 @@ function SlotButton({ slot, selected, onSelect, price, base, reason }: { slot: s
   );
 }
 
-export default function StepSlot({ presta, service, basePrice, selected, onSelect, onBack, notice }: {
+export default function StepSlot({ presta, service, basePrice, campaign, selected, onSelect, onBack, notice }: {
+  /** Jeton du lien de campagne (?c=…). */
+  campaign?: string | null;
   presta: Presta; service: Service;
   /** Prestation + options cochées, avant règles de prix. */
   basePrice: number;
   selected: { date?: string; time?: string };
-  onSelect: (date: string, time: string, location: BookingLocation | null, slotPrice: { price: number; adjustments: Adjustment[] } | null) => void;
+  onSelect: (date: string, time: string, location: BookingLocation | null, slotRules: PriceRuleEffect[], promo: Promo | null) => void;
   onBack: () => void;
   /** Message affiché quand on revient ici parce que le créneau a été pris (WEB-16). */
   notice?: string | null;
@@ -89,6 +91,7 @@ export default function StepSlot({ presta, service, basePrice, selected, onSelec
   const [time,         setTime]         = useState<string | null>(selected.time ?? null);
   const [days,         setDays]         = useState<Record<string, DayAvailability>>({});
   const [rules,        setRules]        = useState<PriceRuleEffect[]>([]);
+  const [promo,        setPromo]        = useState<Promo | null>(null);
   const [loadingMonth, setLoadingMonth] = useState(false);
   const [monthError,   setMonthError]   = useState(false);
 
@@ -118,13 +121,13 @@ export default function StepSlot({ presta, service, basePrice, selected, onSelec
 
     const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
 
-    fetchMonth(presta.slug, service.id, monthKey, !!notice)
-      .then(d => { if (!cancelled) { setDays(d.days); setRules(d.rules); } })
+    fetchMonth(presta.slug, service.id, monthKey, !!notice, campaign ?? null)
+      .then(d => { if (!cancelled) { setDays(d.days); setRules(d.rules); if (d.promo) setPromo(d.promo); } })
       .catch(() => { if (!cancelled) setMonthError(true); })
       .finally(() => { if (!cancelled) setLoadingMonth(false); });
 
     return () => { cancelled = true; };
-  }, [year, month, presta.slug, service.id, notice]);
+  }, [year, month, presta.slug, service.id, notice, campaign]);
 
   // Les créneaux du jour sélectionné sont déjà dans la réponse du mois.
   const slots = date ? (days[date]?.slots ?? []) : [];
@@ -137,7 +140,15 @@ export default function StepSlot({ presta, service, basePrice, selected, onSelec
     const names = (slotPrice(t)?.adjustments ?? []).map(a => a.name).filter(n => n !== "Arrondi" && n !== "Plafond");
     return names.length ? names[0] + (names.length > 1 ? ` +${names.length - 1}` : "") : undefined;
   };
-  const slotPrice = (t: string) => rules.length > 0 && date ? priceForSlot(basePrice, rules, days[date]?.slot_rules?.[t]) : null;
+  const slotRulesOf = (t: string) => {
+    const ids = date ? days[date]?.slot_rules?.[t] : undefined;
+    return ids?.length ? rules.filter(r => ids.includes(r.id)) : [];
+  };
+  const slotPrice = (t: string) => {
+    if (!date) return null;
+    const effects = [...slotRulesOf(t), ...(promoApplies(promo, date, t) ? [promoEffect(promo!)] : [])];
+    return effects.length ? applyRules(basePrice, effects) : null;
+  };
 
   /**
    * Un jour absent de la réponse est un jour que le serveur ne propose pas
@@ -329,7 +340,7 @@ export default function StepSlot({ presta, service, basePrice, selected, onSelec
       </div>
 
       {date && time && (
-        <button onClick={() => { const p = slotPrice(time); onSelect(date, time, location, p && p.adjustments.length > 0 ? p : null); }}
+        <button onClick={() => onSelect(date, time, location, slotRulesOf(time), promo)}
           className="mt-6 w-full bg-accent-600 hover:bg-accent-700 text-on-accent font-medium py-3.5 rounded-xl shadow-sm transition-all active:scale-[0.98]">
           Confirmer ce créneau →
         </button>
