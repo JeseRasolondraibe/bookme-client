@@ -78,6 +78,10 @@ export default async function PrestaPage({ params }: { params: Promise<{ slug: s
     .order("position", { referencedTable: "service_videos" })
     .order("position", { referencedTable: "service_options" });
 
+  // Prestations dont le prix varie selon le créneau (règles de prix actives).
+  const { data: ruled } = await supabase.rpc("services_with_price_rules", { p_presta: presta.id });
+  const ruledIds = new Set(((ruled ?? []) as unknown[]).map(String));
+
   // Supabase renvoie la relation sous le nom de la table ("service_videos") ;
   // on la reformate en "videos" pour matcher le type Service côté client.
   const servicesWithVideos = (services ?? []).map((s) => {
@@ -86,7 +90,7 @@ export default async function PrestaPage({ params }: { params: Promise<{ slug: s
       service_options: { id: string; name: string; price: number; position: number; is_active: boolean }[] | null;
     };
     const options = (service_options ?? []).filter(o => o.is_active).map(({ is_active: _, ...o }) => o);
-    return { ...rest, videos: service_videos, options };
+    return { ...rest, videos: service_videos, options, has_price_rules: ruledIds.has(String(rest.id)) };
   });
 
   return <BookingFlow presta={presta} services={servicesWithVideos} />;
