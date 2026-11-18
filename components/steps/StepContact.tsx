@@ -192,7 +192,7 @@ export default function StepContact({ booking, presta, campaign, onPromo, onSubm
       </div>
       <label className="mt-4 flex items-start gap-3 text-sm text-stone-600 cursor-pointer">
         <input type="checkbox" checked={optIn} onChange={e => setOptIn(e.target.checked)} className="mt-0.5 h-4 w-4 accent-accent-600" />
-        <span>J&apos;accepte de recevoir les offres de {presta?.name ?? "mon prestataire"} par email (rappels, créneaux de dernière minute). Désinscription en un clic.</span>
+        <span>J&apos;accepte de recevoir les offres de {presta?.name ?? "mon prestataire"} par email (rappels, créneaux de dernière minute). Désinscription en un clic. <a href="/privacy" target="_blank" className="underline">En savoir plus</a></span>
       </label>
       <Turnstile onToken={setCaptcha} resetKey={captchaReset} />
       {error && <p className="mt-3 text-sm text-red-500">{error}</p>}

@@ -20,7 +20,7 @@ export default function PrivacyPageEN() {
         Privacy Policy
       </h1>
       <p style={{ color: "#6e6e73", fontSize: "0.9rem", marginBottom: 40 }}>
-        Last updated: June 23, 2026
+        Last updated: November 18, 2026
       </p>
 
       <p>
@@ -56,7 +56,25 @@ export default function PrivacyPageEN() {
         </ul>
       </Section>
 
-      <Section title="3. Data sharing">
+      <Section title="3. Email offers (clients of service providers)">
+        <p>
+          When you book on a service provider&apos;s page, you can tick &quot;I
+          agree to receive offers&quot;. This box is never pre-ticked. If you tick
+          it, that provider may send you promotional emails through Book Me
+          Again: a reminder when it is time to book again, a message after a long
+          absence, or last-minute slots at a reduced price, sometimes with a
+          discount code.
+        </p>
+        <ul style={ulStyle}>
+          <li style={liStyle}><strong>Legal basis</strong>: your consent, given separately for each provider. It is not required to book.</li>
+          <li style={liStyle}><strong>Data used</strong>: your first name, email address and your booking history with that provider (dates, services, amounts), to choose the right time to write. Nothing is shared with other providers or sold.</li>
+          <li style={liStyle}><strong>Unsubscribe</strong>: every email contains an &quot;Unsubscribe&quot; link that takes effect immediately. Emails about your bookings (confirmation, reminder, changes) keep arriving.</li>
+          <li style={liStyle}><strong>Measurement</strong>: we record each email sent and any booking that results from it, to show the provider the results of their offers. Our email provider (Resend) may measure email opens.</li>
+          <li style={liStyle}><strong>Retention</strong>: your consent is kept until you unsubscribe, and at most 3 years after your last booking with that provider.</li>
+        </ul>
+      </Section>
+
+      <Section title="4. Data sharing">
         <p>
           We do not sell your personal data. Your information may be shared only
           with technical service providers necessary for the operation of the App
@@ -65,16 +83,17 @@ export default function PrivacyPageEN() {
         </p>
       </Section>
 
-      <Section title="4. Third-party services">
+      <Section title="5. Third-party services">
         <p>
           The App relies on the following technical providers: Supabase
           (authentication, database and storage), Vercel (hosting of the booking
-          page), Resend (confirmation and reminder emails), Expo (push
-          notifications) and Google (Sign in with Google, if you choose it).
+          page), Resend (confirmation, reminder and offer emails), Stripe
+          (subscription payments and deposits, paid directly to the provider),
+          Expo (push notifications) and Google (Sign in with Google, if you choose it).
         </p>
       </Section>
 
-      <Section title="5. Data retention">
+      <Section title="6. Data retention">
         <p>
           We retain your data for as long as necessary to provide our services or
           to meet our legal obligations. You may request the deletion of your data
@@ -82,7 +101,7 @@ export default function PrivacyPageEN() {
         </p>
       </Section>
 
-      <Section title="6. Your rights">
+      <Section title="7. Your rights">
         <p>
           In accordance with the General Data Protection Regulation (GDPR), you
           have the right to access, rectify, delete, and port your data, as well as
@@ -91,28 +110,28 @@ export default function PrivacyPageEN() {
         </p>
       </Section>
 
-      <Section title="7. Security">
+      <Section title="8. Security">
         <p>
           We implement reasonable technical and organizational measures to protect
           your data against unauthorized access, disclosure, or destruction.
         </p>
       </Section>
 
-      <Section title="8. Children">
+      <Section title="9. Children">
         <p>
           The App is not intended for children under the age of 13, and we do not
           knowingly collect data concerning them.
         </p>
       </Section>
 
-      <Section title="9. Changes">
+      <Section title="10. Changes">
         <p>
           This policy may be updated from time to time. Any changes will be posted
           on this page with an updated revision date.
         </p>
       </Section>
 
-      <Section title="10. Contact">
+      <Section title="11. Contact">
         <p>
           For any questions regarding this privacy policy, contact us at:{" "}
           <a href="mailto:jeserasolondraibe@gmail.com" style={{ color: "#0066cc" }}>

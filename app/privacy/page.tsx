@@ -20,7 +20,7 @@ export default function PrivacyPage() {
         Politique de confidentialité
       </h1>
       <p style={{ color: "#6e6e73", fontSize: "0.9rem", marginBottom: 40 }}>
-        Dernière mise à jour : 23/06/2026
+        Dernière mise à jour : 18/11/2026
       </p>
 
       <p>
@@ -35,7 +35,7 @@ export default function PrivacyPage() {
         <ul style={ulStyle}>
           <li style={liStyle}>
             <strong>Informations de compte</strong> : adresse e-mail, nom
-            d&apos;utilisateur (supprimez si non applicable).
+            d&apos;utilisateur.
           </li>
           <li style={liStyle}>
             <strong>Données de réservation</strong> : informations liées aux
@@ -58,7 +58,49 @@ export default function PrivacyPage() {
         </ul>
       </Section>
 
-      <Section title="3. Partage des données">
+      <Section title="3. Offres par email (client(e)s des prestataires)">
+        <p>
+          Lorsque vous réservez sur la page d&apos;un(e) prestataire, vous pouvez
+          cocher la case « J&apos;accepte de recevoir les offres ». Cette case
+          n&apos;est jamais cochée par défaut. Si vous la cochez, ce(tte)
+          prestataire peut vous envoyer, via Book Me Again, des emails
+          promotionnels : rappel quand il est temps de reprendre rendez-vous,
+          message après une longue absence, créneaux de dernière minute à prix
+          réduit, avec parfois un code de réduction.
+        </p>
+        <ul style={ulStyle}>
+          <li style={liStyle}>
+            <strong>Base légale</strong> : votre consentement, propre à chaque
+            prestataire. Il n&apos;est pas nécessaire pour réserver.
+          </li>
+          <li style={liStyle}>
+            <strong>Données utilisées</strong> : votre prénom, votre adresse email
+            et l&apos;historique de vos rendez-vous chez ce(tte) prestataire
+            (dates, prestations, montants), pour choisir le bon moment
+            d&apos;envoi. Aucune donnée n&apos;est partagée avec d&apos;autres
+            prestataires ni revendue.
+          </li>
+          <li style={liStyle}>
+            <strong>Désinscription</strong> : chaque email contient un lien
+            « Se désinscrire », effectif immédiatement. Les emails liés à vos
+            rendez-vous (confirmation, rappel, modification) continuent
+            d&apos;arriver.
+          </li>
+          <li style={liStyle}>
+            <strong>Mesure</strong> : nous enregistrons l&apos;envoi de chaque
+            email et, le cas échéant, la réservation qui en découle, pour indiquer
+            au (à la) prestataire les résultats de ses offres. Notre prestataire
+            d&apos;envoi (Resend) peut mesurer l&apos;ouverture des emails.
+          </li>
+          <li style={liStyle}>
+            <strong>Conservation</strong> : votre consentement est conservé tant
+            que vous ne vous désinscrivez pas, et au plus 3 ans après votre dernier
+            rendez-vous chez ce(tte) prestataire.
+          </li>
+        </ul>
+      </Section>
+
+      <Section title="4. Partage des données">
         <p>
           Nous ne vendons pas vos données personnelles. Vos informations peuvent
           être partagées uniquement avec des prestataires techniques nécessaires
@@ -68,17 +110,19 @@ export default function PrivacyPage() {
         </p>
       </Section>
 
-      <Section title="4. Services tiers">
+      <Section title="5. Services tiers">
         <p>
           L&apos;Application s&apos;appuie sur les prestataires techniques
           suivants : Supabase (authentification, base de données et stockage),
           Vercel (hébergement de la page de réservation), Resend (envoi des
-          emails de confirmation et de rappel), Expo (notifications push) et
-          Google (connexion avec un compte Google, si vous la choisissez).
+          emails de confirmation, de rappel et des offres), Stripe (paiement des
+          abonnements et des acomptes, versés directement au (à la)
+          prestataire), Expo (notifications push) et Google (connexion avec un
+          compte Google, si vous la choisissez).
         </p>
       </Section>
 
-      <Section title="5. Conservation des données">
+      <Section title="6. Conservation des données">
         <p>
           Nous conservons vos données aussi longtemps que nécessaire pour fournir
           nos services ou pour répondre à nos obligations légales. Vous pouvez
@@ -86,7 +130,7 @@ export default function PrivacyPage() {
         </p>
       </Section>
 
-      <Section title="6. Vos droits">
+      <Section title="7. Vos droits">
         <p>
           Conformément au Règlement général sur la protection des données (RGPD),
           vous disposez d&apos;un droit d&apos;accès, de rectification, de
@@ -96,7 +140,7 @@ export default function PrivacyPage() {
         </p>
       </Section>
 
-      <Section title="7. Sécurité">
+      <Section title="8. Sécurité">
         <p>
           Nous mettons en œuvre des mesures techniques et organisationnelles
           raisonnables pour protéger vos données contre tout accès, divulgation ou
@@ -104,21 +148,21 @@ export default function PrivacyPage() {
         </p>
       </Section>
 
-      <Section title="8. Enfants">
+      <Section title="9. Enfants">
         <p>
           L&apos;Application ne s&apos;adresse pas aux enfants de moins de 13 ans
           et nous ne collectons pas sciemment de données les concernant.
         </p>
       </Section>
 
-      <Section title="9. Modifications">
+      <Section title="10. Modifications">
         <p>
           Cette politique peut être mise à jour ponctuellement. Toute modification
           sera publiée sur cette page avec une date de mise à jour actualisée.
         </p>
       </Section>
 
-      <Section title="10. Contact">
+      <Section title="11. Contact">
         <p>
           Pour toute question concernant cette politique de confidentialité,
           contactez-nous à :{" "}
