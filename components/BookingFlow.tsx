@@ -9,6 +9,7 @@ import BookingSummary from "./BookingSummary";
 import PortfolioGallery from "./PortfolioGallery";
 import { themeOf, themeStyle, fontsHref } from "@/lib/themes";
 import { formatPrice } from "@/lib/price";
+import type { Adjustment } from "@/lib/priceRules";
 
 export type Presta  = {
   id: string; slug: string; name: string; bio?: string; avatar_url?: string; phone?: string;
@@ -38,7 +39,14 @@ export function totalPrice(service: Service, options: ServiceOption[] = []): num
 // Pas d'adresse côté page publique : elle n'est envoyée que dans l'email de
 // confirmation. Seuls le libellé du lieu et la ville publique sont connus ici.
 export type BookingLocation = { id: string | null; label: string | null; city?: string | null };
-export type Booking = { service: Service; options?: ServiceOption[]; date: string; time: string; client_name: string; client_phone: string; client_email?: string; location?: BookingLocation | null };
+export type Booking = { service: Service; options?: ServiceOption[]; date: string; time: string; client_name: string; client_phone: string; client_email?: string; location?: BookingLocation | null;
+  /** Prix du créneau après règles de prix (absent = pas de règle). */
+  slotPrice?: { price: number; adjustments: Adjustment[] } | null };
+/** Prix affiché : celui du créneau choisi s'il y a des règles, sinon le total. */
+export function bookingPrice(b: Partial<Booking>): number {
+  if (b.slotPrice) return b.slotPrice.price;
+  return b.service ? totalPrice(b.service, b.options) : 0;
+}
 
 const STEPS = ["Prestation", "Créneau", "Coordonnées", "Confirmation"];
 // Titres d'étape au ton conversationnel (plus de « 1. Choisissez… »).
@@ -138,9 +146,9 @@ export default function BookingFlow({ presta, services }: { presta: Presta; serv
             )}
 
             {step === 1 && <StepService services={services} selected={booking.service} selectedOptions={booking.options ?? []}
-              onSelect={s => patch(booking.service?.id === s.id ? { service: s } : { service: s, options: [] })}
-              onOptionsChange={options => patch({ options })} />}
-            {step === 2 && <StepSlot presta={presta} service={booking.service!} selected={{ date: booking.date, time: booking.time }} onSelect={(date, time, location) => { setSlotNotice(null); patch({ date, time, location }); goTo(3); }} onBack={goBack} notice={slotNotice} />}
+              onSelect={s => patch(booking.service?.id === s.id ? { service: s } : { service: s, options: [], slotPrice: null })}
+              onOptionsChange={options => patch({ options, slotPrice: null })} />}
+            {step === 2 && <StepSlot presta={presta} service={booking.service!} basePrice={totalPrice(booking.service!, booking.options)} selected={{ date: booking.date, time: booking.time }} onSelect={(date, time, location, slotPrice) => { setSlotNotice(null); patch({ date, time, location, slotPrice }); goTo(3); }} onBack={goBack} notice={slotNotice} />}
             {step === 3 && <StepContact booking={booking as Booking} presta={presta} onSubmit={data => { patch(data); goTo(4); }} onBack={goBack}
               onSlotTaken={(msg, typed) => { setSlotNotice(msg); patch({ ...typed, time: undefined }); goBack(); }} />}
             {step === 4 && <StepConfirm booking={booking as Booking} presta={presta} onRestart={() => { setBooking({}); goTo(1); }} />}

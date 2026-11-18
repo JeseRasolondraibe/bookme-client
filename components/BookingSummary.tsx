@@ -1,5 +1,5 @@
 "use client";
-import { Booking, totalPrice } from "./BookingFlow";
+import { Booking, bookingPrice } from "./BookingFlow";
 import { ClockIcon, TagIcon, CalendarIcon } from "./icons";
 import { formatDuration } from "@/lib/duration";
 import { formatPrice } from "@/lib/price";
@@ -41,7 +41,7 @@ export default function BookingSummary({ booking, step, onContinue }: {
           </p>
           <p className="flex items-center gap-2 text-sm text-stone-500">
             <TagIcon className="w-3.5 h-3.5 text-stone-400" />
-            {formatPrice(totalPrice(service, options))}
+            {formatPrice(bookingPrice(booking))}
           </p>
           {date && time && (
             <p className="flex items-center gap-2 text-sm text-stone-500 first-letter:uppercase">

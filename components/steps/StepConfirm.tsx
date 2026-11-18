@@ -1,5 +1,5 @@
 "use client";
-import { Booking, Presta, totalPrice } from "../BookingFlow";
+import { Booking, Presta, bookingPrice } from "../BookingFlow";
 import { formatPrice } from "@/lib/price";
 
 function formatDate(d: string) {
@@ -55,7 +55,7 @@ export default function StepConfirm({ booking, presta, onRestart }: {
           </span>
         </div>
         <div className="flex justify-between text-sm py-1.5">
-          <span className="text-stone-500">{(booking.options ?? []).length > 0 ? "Total" : "Prix"}</span><span className="font-semibold text-stone-900">{formatPrice(totalPrice(booking.service, booking.options))}</span>
+          <span className="text-stone-500">{(booking.options ?? []).length > 0 || booking.slotPrice ? "Total" : "Prix"}</span><span className="font-semibold text-stone-900">{formatPrice(bookingPrice(booking))}</span>
         </div>
       </div>
       <div className="flex flex-col gap-3">
